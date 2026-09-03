@@ -3,246 +3,514 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Cadê o Ônibus?</title>
+  <title>Cadê o Ônibus? • Mobilidade Carioca</title>
 
   <!-- PWA iOS -->
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Ônibus Rio">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Cadê o Ônibus">
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <style>
+    :root {
+      --bg: #faf7f2;
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --primary: #1b6354;
+      --primary-hover: #144d41;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --radius: 20px;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f2f2f7; }
-    #map { width: 100vw; height: 100vh; z-index: 1; }
-
-    /* Barra Superior */
-    .top-bar {
-      position: absolute;
-      top: 48px;
-      left: 16px;
-      right: 16px;
-      z-index: 1000;
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
       display: flex;
-      gap: 10px;
-      background: rgba(255, 255, 255, 0.88);
-      padding: 8px 12px;
-      border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
     }
 
-    input {
-      flex: 1;
-      padding: 10px 14px;
-      border: 1px solid rgba(0,0,0,0.1);
+    /* Cabeçalho */
+    header {
+      padding: 18px 20px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: transparent;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      background: var(--primary);
+      color: white;
+      width: 42px;
+      height: 42px;
       border-radius: 12px;
-      font-size: 16px;
-      background: #fff;
-      outline: none;
-    }
-
-    button.btn-search {
-      padding: 10px 18px;
-      background: #007aff;
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      font-weight: 600;
-      font-size: 15px;
-      cursor: pointer;
-    }
-
-    /* Botão de Localização do Usuário */
-    .btn-geo {
-      position: absolute;
-      bottom: 80px;
-      right: 18px;
-      z-index: 1000;
-      background: #ffffff;
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      border: none;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.2);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 20px;
+      box-shadow: 0 4px 10px rgba(27, 99, 84, 0.25);
+    }
+
+    .brand h1 { font-size: 19px; font-weight: 800; color: #111827; }
+    .brand p { font-size: 10.5px; font-weight: 700; letter-spacing: 0.8px; color: var(--text-muted); text-transform: uppercase; }
+
+    .btn-geo {
+      background: white;
+      border: 1px solid rgba(0,0,0,0.08);
+      padding: 8px 14px;
+      border-radius: 24px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
       cursor: pointer;
     }
 
-    /* Badge de status inferior */
-    .status-badge {
-      position: absolute;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1000;
-      background: rgba(28, 28, 30, 0.85);
-      color: #fff;
-      padding: 8px 18px;
-      border-radius: 24px;
-      font-size: 13px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      pointer-events: none;
-      white-space: nowrap;
+    /* Painel Central */
+    .controls {
+      padding: 6px 20px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 10;
     }
 
-    /* Ícone visual do ônibus */
-    .bus-pin {
-      background: #007aff;
+    .search-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      padding: 16px;
+      border-radius: var(--radius);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      border: 1px solid rgba(0,0,0,0.04);
+    }
+
+    .search-card label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.7px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-wrapper {
+      position: relative;
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-wrapper span {
+      position: absolute;
+      left: 14px;
+      font-size: 16px;
+      color: var(--text-muted);
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 14px 12px 40px;
+      font-size: 16px;
+      font-weight: 600;
+      border: 1px solid #e5e7eb;
+      background: #fdfdfd;
+      border-radius: 14px;
+      outline: none;
+    }
+
+    .btn-add {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0 18px;
+      border-radius: 14px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(27, 99, 84, 0.2);
+    }
+
+    /* Lista de Linhas Monitoradas */
+    .chips-container {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .line-chip {
+      background: white;
+      border: 1px solid #e5e7eb;
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    }
+
+    .color-picker-input {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      border: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      cursor: pointer;
+      padding: 0;
+      background: transparent;
+    }
+    .color-picker-input::-webkit-color-swatch-wrapper { padding: 0; }
+    .color-picker-input::-webkit-color-swatch { border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 3px rgba(0,0,0,0.4); }
+
+    .chip-remove {
+      background: none;
+      border: none;
+      font-size: 15px;
+      color: #9ca3af;
+      cursor: pointer;
+      padding: 0 2px;
+    }
+
+    /* Sugestões rápidas */
+    .quick-tags {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .quick-tags span { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+    .tag-btn {
+      background: #f3f4f6;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+      cursor: pointer;
+    }
+
+    /* Status Bar */
+    #status-msg {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* Mapa */
+    #map-container {
+      flex: 1;
+      position: relative;
+      border-top-left-radius: 28px;
+      border-top-right-radius: 28px;
+      overflow: hidden;
+      box-shadow: 0 -8px 24px rgba(0,0,0,0.06);
+    }
+
+    #map { width: 100%; height: 100%; }
+
+    /* Marcador do Ônibus */
+    .bus-marker-pin {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
       color: white;
       padding: 4px 8px;
       border-radius: 12px;
       font-size: 11px;
-      font-weight: bold;
+      font-weight: 800;
       border: 2px solid white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
       white-space: nowrap;
+      transition: transform 0.2s;
     }
   </style>
 </head>
 <body>
 
-  <div class="top-bar">
-    <input id="linhaInput" type="text" placeholder="Buscar linha (ex: 232, 606, 693)" />
-    <button class="btn-search" onclick="buscarOnibus()">Buscar</button>
-  </div>
+  <header>
+    <div class="brand">
+      <div class="brand-icon">🚌</div>
+      <div>
+        <h1>Cadê o Ônibus?</h1>
+        <p>Mobilidade Carioca • Sem Pressa</p>
+      </div>
+    </div>
+    <button class="btn-geo" onclick="localizarUsuario()">🎯 Minha localização</button>
+  </header>
 
-  <button class="btn-geo" onclick="localizarUsuario()" title="Minha Localização">📍</button>
-  <div id="status" class="status-badge">Digite uma linha para rastrear</div>
-  <div id="map"></div>
+  <section class="controls">
+    <div class="search-card">
+      <label>Quais linhas você quer monitorar?</label>
+      <div class="input-group">
+        <div class="input-wrapper">
+          <span>🔍</span>
+          <input id="linhaInput" type="text" placeholder="Ex: 232, 606, 693..." />
+        </div>
+        <button class="btn-add" onclick="adicionarLinha()">Rastrear</button>
+      </div>
+
+      <div class="quick-tags">
+        <span>Tente:</span>
+        <button class="tag-btn" onclick="atalhoLinha('232')">232</button>
+        <button class="tag-btn" onclick="atalhoLinha('606')">606</button>
+        <button class="tag-btn" onclick="atalhoLinha('693')">693</button>
+        <button class="tag-btn" onclick="atalhoLinha('474')">474</button>
+      </div>
+
+      <div class="chips-container" id="chipsContainer"></div>
+      <div id="status-msg">Adicione uma ou mais linhas acima para exibir no mapa.</div>
+    </div>
+  </section>
+
+  <main id="map-container">
+    <div id="map"></div>
+  </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // Inicializa o mapa com estilo Voyager (Clean / Moderno)
+    // Paleta de cores default para quando adicionar linhas sequencialmente
+    const CORES_DEFAULT = ['#1b6354', '#d97706', '#2563eb', '#9333ea', '#dc2626', '#059669'];
+    let corIndex = 0;
+
+    // Estado das linhas monitoradas: { "232": { color: "#1b6354", markers: [], polyline: null } }
+    const linhasAtivas = {};
+
+    // Mapa com CartoDB Voyager
     const map = L.map('map', { zoomControl: false }).setView([-22.9068, -43.1729], 12);
-    
-    // Tiles da CartoDB - Voyager (visual limpo e profissional)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
       attribution: '&copy; CARTO'
     }).addTo(map);
 
-    let markers = [];
-    let intervalId = null;
     let userMarker = null;
 
-    // Localizar a posição do próprio usuário no mapa
-    function localizarUsuario() {
-      if (!navigator.geolocation) {
-        alert("Geolocalização não suportada.");
-        return;
+    function atalhoLinha(linha) {
+      document.getElementById('linhaInput').value = linha;
+      adicionarLinha();
+    }
+
+    function adicionarLinha() {
+      const input = document.getElementById('linhaInput');
+      const linha = input.value.trim().toUpperCase();
+      if (!linha || linhasAtivas[linha]) return;
+
+      const cor = CORES_DEFAULT[corIndex % CORES_DEFAULT.length];
+      corIndex++;
+
+      linhasAtivas[linha] = { color: cor, markers: [], polyline: null };
+      input.value = '';
+
+      renderChips();
+      atualizarTodos();
+    }
+
+    function removerLinha(linha) {
+      if (!linhasAtivas[linha]) return;
+      limparCamadaLinha(linha);
+      delete linhasAtivas[linha];
+      renderChips();
+      atualizarStatusGeral();
+    }
+
+    function mudarCorLinha(linha, novaCor) {
+      if (!linhasAtivas[linha]) return;
+      linhasAtivas[linha].color = novaCor;
+      renderChips();
+      atualizarTodos();
+    }
+
+    function limparCamadaLinha(linha) {
+      const obj = linhasAtivas[linha];
+      if (!obj) return;
+      obj.markers.forEach(m => map.removeLayer(m));
+      obj.markers = [];
+      if (obj.polyline) {
+        map.removeLayer(obj.polyline);
+        obj.polyline = null;
       }
-      navigator.geolocation.getCurrentPosition(pos => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
+    }
 
-        if (userMarker) map.removeLayer(userMarker);
-        
-        userMarker = L.circleMarker([lat, lng], {
-          radius: 8,
-          fillColor: "#34c759",
-          color: "#fff",
-          weight: 3,
-          opacity: 1,
-          fillOpacity: 0.9
-        }).addTo(map).bindPopup("Você está aqui").openPopup();
+    function renderChips() {
+      const container = document.getElementById('chipsContainer');
+      container.innerHTML = '';
 
-        map.setView([lat, lng], 14);
-      }, () => {
-        alert("Não foi possível obter sua localização. Verifique as permissões do Safari.");
+      Object.keys(linhasAtivas).forEach(linha => {
+        const chip = document.createElement('div');
+        chip.className = 'line-chip';
+        chip.innerHTML = `
+          <input type="color" class="color-picker-input" value="${linhasAtivas[linha].color}" onchange="mudarCorLinha('${linha}', this.value)" title="Mudar cor da linha">
+          <span>Linha ${linha}</span>
+          <button class="chip-remove" onclick="removerLinha('${linha}')">×</button>
+        `;
+        container.appendChild(chip);
       });
     }
 
-    async function carregarGPS(linha) {
-      const status = document.getElementById('status');
-      status.innerText = "Consultando satélites da prefeitura...";
+    // Busca robusta usando fallback de múltiplos proxies para contornar bloqueios de rede/CORS
+    async function fetchComFallback(url) {
+      const proxies = [
+        `https://corsproxy.io/?${encodeURIComponent(url)}`,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+      ];
 
-      // Usa proxy CORS para garantir que a requisição passe sem ser bloqueada pelo navegador
-      const apiUrl = `https://dados.mobilidade.rio/gps/sppo`;
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`;
+      for (const proxy of proxies) {
+        try {
+          const res = await fetch(proxy, { cache: "no-store" });
+          if (res.ok) return await res.json();
+        } catch (e) {
+          console.warn("Falha no proxy:", proxy, e);
+        }
+      }
+      throw new Error("Não foi possível acessar a API da SMTR");
+    }
+
+    async function atualizarTodos() {
+      const linhas = Object.keys(linhasAtivas);
+      if (linhas.length === 0) return;
+
+      const status = document.getElementById('status-msg');
+      status.innerText = "Atualizando satélites do GPS...";
 
       try {
-        const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error("Erro na rede");
-        const dados = await response.json();
+        const dados = await fetchComFallback("https://dados.mobilidade.rio/gps/sppo");
+        let totalEncontrados = 0;
+        const todasCoordenadas = [];
 
-        // Limpa marcadores anteriores
-        markers.forEach(m => map.removeLayer(m));
-        markers = [];
+        linhas.forEach(linha => {
+          limparCamadaLinha(linha);
+          const cor = linhasAtivas[linha].color;
+          const buscaNumero = linha.replace(/\D/g, '');
 
-        // Filtra a linha informada (ex: linha 232 pode aparecer como 0232 ou 232)
-        const buscaLimpa = linha.replace(/\D/g, '');
-        const onibusEncontrados = dados.filter(item => {
-          if (!item.linha) return false;
-          const linhaItem = item.linha.toString().replace(/\D/g, '');
-          return linhaItem === buscaLimpa || item.linha.toString().toLowerCase().includes(linha.toLowerCase());
-        });
+          // Filtra pelo código ou nome da linha
+          const onibus = dados.filter(b => {
+            if (!b.linha) return false;
+            const bLinhaNum = b.linha.toString().replace(/\D/g, '');
+            return bLinhaNum === buscaNumero || b.linha.toString().toUpperCase() === linha;
+          });
 
-        if (onibusEncontrados.length === 0) {
-          status.innerText = `Nenhum sinal ativo para a linha ${linha}`;
-          return;
-        }
+          totalEncontrados += onibus.length;
+          const coordsLinha = [];
 
-        const coords = [];
+          onibus.forEach(bus => {
+            const lat = parseFloat(bus.latitude?.toString().replace(',', '.'));
+            const lng = parseFloat(bus.longitude?.toString().replace(',', '.'));
 
-        onibusEncontrados.forEach(bus => {
-          const lat = parseFloat(bus.latitude?.toString().replace(',', '.'));
-          const lng = parseFloat(bus.longitude?.toString().replace(',', '.'));
+            if (!isNaN(lat) && !isNaN(lng) && lat !== 0) {
+              const pos = [lat, lng];
+              coordsLinha.push(pos);
+              todasCoordenadas.push(pos);
 
-          if (!isNaN(lat) && !isNaN(lng) && lat !== 0) {
-            coords.push([lat, lng]);
+              const icone = L.divIcon({
+                className: 'custom-pin',
+                html: `<div class="bus-marker-pin" style="background:${cor};">🚌 ${bus.linha}</div>`,
+                iconSize: [64, 26],
+                iconAnchor: [32, 13]
+              });
 
-            // Ícone estilizado com a linha
-            const icone = L.divIcon({
-              className: 'custom-bus',
-              html: `<div class="bus-pin">🚌 ${bus.linha}</div>`,
-              iconSize: [60, 24],
-              iconAnchor: [30, 12]
-            });
+              const m = L.marker(pos, { icon: icone }).addTo(map)
+                .bindPopup(`
+                  <div style="font-size:13px; line-height: 1.4;">
+                    <b style="color:${cor}; font-size:15px;">Linha ${bus.linha}</b><br>
+                    <b>Ordem:</b> ${bus.ordem || 'N/D'}<br>
+                    <b>Velocidade:</b> ${bus.velocidade || 0} km/h
+                  </div>
+                `);
 
-            const marker = L.marker([lat, lng], { icon: icone }).addTo(map)
-              .bindPopup(`
-                <div style="font-size: 13px;">
-                  <b>Linha:</b> ${bus.linha}<br>
-                  <b>Ordem:</b> ${bus.ordem || 'N/A'}<br>
-                  <b>Velocidade:</b> ${bus.velocidade || 0} km/h
-                </div>
-              `);
-            markers.push(marker);
+              linhasAtivas[linha].markers.push(m);
+            }
+          });
+
+          // Traça rota aproximada entre os pontos ativos daquela linha
+          if (coordsLinha.length > 1) {
+            linhasAtivas[linha].polyline = L.polyline(coordsLinha, {
+              color: cor,
+              weight: 4,
+              opacity: 0.6,
+              dashArray: '6, 8'
+            }).addTo(map);
           }
         });
 
-        if (coords.length > 0) {
-          map.fitBounds(coords, { padding: [60, 60] });
-          status.innerText = `${markers.length} ônibus encontrados na linha ${linha}`;
+        if (todasCoordenadas.length > 0) {
+          map.fitBounds(todasCoordenadas, { padding: [50, 50] });
+          status.innerText = `${totalEncontrados} ônibus ativos mapeados no total. Atualizado agora.`;
         } else {
-          status.innerText = `Coordenadas inválidas para a linha ${linha}`;
+          status.innerText = "Nenhum ônibus em circulação com sinal emitido no momento para as linhas selecionadas.";
         }
       } catch (err) {
-        console.error(err);
-        status.innerText = "Falha ao conectar com o serviço de GPS da SMTR";
+        status.innerText = "Não foi possível sincronizar o GPS. Tentaremos novamente em instantes.";
       }
     }
 
-    function buscarOnibus() {
-      const input = document.getElementById('linhaInput').value.trim();
-      if (!input) return;
-
-      if (intervalId) clearInterval(intervalId);
-
-      carregarGPS(input);
-      // Auto-refresh a cada 15 segundos
-      intervalId = setInterval(() => carregarGPS(input), 15000);
+    function atualizarStatusGeral() {
+      const total = Object.keys(linhasAtivas).length;
+      document.getElementById('status-msg').innerText = total === 0 
+        ? "Adicione uma ou mais linhas acima para exibir no mapa." 
+        : `Monitorando ${total} linha(s)...`;
     }
+
+    function localizarUsuario() {
+      if (!navigator.geolocation) {
+        alert("Geolocalização não suportada no seu navegador.");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(pos => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        if (userMarker) map.removeLayer(userMarker);
+
+        userMarker = L.circleMarker([lat, lng], {
+          radius: 9,
+          fillColor: "#007aff",
+          color: "#ffffff",
+          weight: 3,
+          opacity: 1,
+          fillOpacity: 1
+        }).addTo(map).bindPopup("<b>Você está aqui</b>").openPopup();
+
+        map.setView([lat, lng], 15);
+      }, () => {
+        alert("Ative a permissão de localização do Safari para ver onde você está.");
+      });
+    }
+
+    // Atualização em tempo real a cada 15s
+    setInterval(() => {
+      if (Object.keys(linhasAtivas).length > 0) {
+        atualizarTodos();
+      }
+    }, 15000);
   </script>
 </body>
 </html>
