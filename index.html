@@ -1,808 +1,88 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Cadê o Ônibus? • Mobilidade Carioca</title>
-
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Cadê o Ônibus">
-
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
-  <style>
-    :root {
-      --bg: #faf7f2;
-      --card: #ffffff;
-      --primary: #1b6354;
-      --text: #1f2937;
-      --text-muted: #6b7280;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    header {
-      padding: 14px 20px 6px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .brand-icon {
-      background: var(--primary);
-      color: white;
-      width: 38px;
-      height: 38px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 19px;
-      box-shadow: 0 4px 10px rgba(27, 99, 84, 0.2);
-    }
-
-    .brand h1 { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
-    .brand p { font-size: 9.5px; font-weight: 700; letter-spacing: 0.8px; color: var(--text-muted); text-transform: uppercase; }
-
-    .btn-geo {
-      background: white;
-      border: 1px solid rgba(0,0,0,0.08);
-      padding: 7px 13px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      cursor: pointer;
-    }
-
-    .controls {
-      padding: 4px 18px 8px;
-      z-index: 10;
-    }
-
-    .search-card {
-      background: var(--card);
-      padding: 12px 14px;
-      border-radius: 18px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.04);
-      border: 1px solid rgba(0,0,0,0.04);
-    }
-
-    .search-card label {
-      font-size: 10.5px;
-      font-weight: 700;
-      letter-spacing: 0.6px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      margin-bottom: 6px;
-      display: block;
-    }
-
-    .input-group {
-      display: flex;
-      gap: 8px;
-    }
-
-    .input-wrapper {
-      position: relative;
-      flex: 1;
-      display: flex;
-      align-items: center;
-    }
-
-    .input-wrapper span {
-      position: absolute;
-      left: 12px;
-      font-size: 14px;
-      color: var(--text-muted);
-    }
-
-    input[type="text"] {
-      width: 100%;
-      padding: 10px 12px 10px 34px;
-      font-size: 15px;
-      font-weight: 600;
-      border: 1px solid #e5e7eb;
-      background: #fafafa;
-      border-radius: 12px;
-      outline: none;
-    }
-
-    .btn-add {
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 0 16px;
-      border-radius: 12px;
-      font-weight: 600;
-      font-size: 13px;
-      cursor: pointer;
-    }
-
-    .chips-container {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      margin-top: 8px;
-    }
-
-    .line-chip {
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-      padding: 4px 8px;
-      border-radius: 10px;
-      font-size: 12px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .color-picker-input {
-      -webkit-appearance: none;
-      appearance: none;
-      border: none;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      cursor: pointer;
-      padding: 0;
-      background: transparent;
-    }
-    .color-picker-input::-webkit-color-swatch-wrapper { padding: 0; }
-    .color-picker-input::-webkit-color-swatch { border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 2px rgba(0,0,0,0.4); }
-
-    .chip-remove {
-      background: none;
-      border: none;
-      font-size: 15px;
-      color: #9ca3af;
-      cursor: pointer;
-      line-height: 1;
-    }
-
-    .quick-tags {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 6px;
-      flex-wrap: wrap;
-    }
-    .quick-tags span { font-size: 10.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-    .tag-btn {
-      background: #f3f4f6;
-      border: none;
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-size: 11.5px;
-      font-weight: 600;
-      color: var(--text);
-      cursor: pointer;
-    }
-
-    #status-msg {
-      font-size: 11.5px;
-      font-weight: 500;
-      color: var(--text-muted);
-      margin-top: 6px;
-    }
-
-    #map-container {
-      flex: 1;
-      position: relative;
-      border-top-left-radius: 24px;
-      border-top-right-radius: 24px;
-      overflow: hidden;
-    }
-
-    #map { width: 100%; height: 100%; }
-
-    .bus-marker-pin {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 3px;
-      color: white;
-      padding: 3px 6px;
-      border-radius: 10px;
-      font-size: 11px;
-      font-weight: 800;
-      border: 2px solid white;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.35);
-      white-space: nowrap;
-    }
-
-    /* Estilo para as rotas no mapa */
-    .route-line {
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-  </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Cadê o Ônibus? • Mobilidade Carioca</title>
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Cadê o Ônibus">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--bg:#faf7f2;--card:#fff;--primary:#1b6354;--text:#1f2937;--text-muted:#6b7280;--danger:#b91c1c;--warning:#a16207}*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;height:100vh;overflow:hidden}header{padding:14px 20px 6px;display:flex;justify-content:space-between;align-items:center}.brand{display:flex;align-items:center;gap:10px}.brand-icon{background:var(--primary);color:#fff;width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 4px 10px rgba(27,99,84,.2)}.brand h1{font-size:18px;font-weight:800;letter-spacing:-.3px}.brand p{font-size:9.5px;font-weight:700;letter-spacing:.8px;color:var(--text-muted);text-transform:uppercase}.btn-geo{background:#fff;border:1px solid rgba(0,0,0,.08);padding:7px 13px;border-radius:20px;font-size:12px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:5px;cursor:pointer}.btn-geo:disabled,.btn-add:disabled{opacity:.6;cursor:wait}.controls{padding:4px 18px 8px;z-index:10}.search-card{background:var(--card);padding:12px 14px;border-radius:18px;box-shadow:0 6px 20px rgba(0,0,0,.04);border:1px solid rgba(0,0,0,.04)}.search-card label{font-size:10.5px;font-weight:700;letter-spacing:.6px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;display:block}.input-group{display:flex;gap:8px}.input-wrapper{position:relative;flex:1;display:flex;align-items:center}.input-wrapper span{position:absolute;left:12px;font-size:14px;color:var(--text-muted)}input[type=text]{width:100%;padding:10px 12px 10px 34px;font-size:15px;font-weight:600;border:1px solid #e5e7eb;background:#fafafa;border-radius:12px;outline:none}input[type=text]:focus{border-color:rgba(27,99,84,.45);box-shadow:0 0 0 3px rgba(27,99,84,.08)}.btn-add{background:var(--primary);color:#fff;border:0;padding:0 16px;border-radius:12px;font-weight:600;font-size:13px;cursor:pointer}.chips-container{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.line-chip{background:#f9fafb;border:1px solid #e5e7eb;padding:4px 8px;border-radius:10px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px}.color-picker-input{-webkit-appearance:none;appearance:none;border:0;width:18px;height:18px;border-radius:50%;cursor:pointer;padding:0;background:transparent}.color-picker-input::-webkit-color-swatch-wrapper{padding:0}.color-picker-input::-webkit-color-swatch{border:2px solid #fff;border-radius:50%;box-shadow:0 0 2px rgba(0,0,0,.4)}.chip-remove{background:0;border:0;font-size:15px;color:#9ca3af;cursor:pointer;line-height:1}.quick-tags{display:flex;align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap}.quick-tags span{font-size:10.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase}.tag-btn{background:#f3f4f6;border:0;padding:3px 8px;border-radius:6px;font-size:11.5px;font-weight:600;color:var(--text);cursor:pointer}.tag-btn:hover{background:#e5e7eb}#status-msg{font-size:11.5px;font-weight:500;color:var(--text-muted);margin-top:6px;min-height:16px}#map-container{flex:1;position:relative;border-top-left-radius:24px;border-top-right-radius:24px;overflow:hidden}#map{width:100%;height:100%}.bus-marker-pin{display:flex;align-items:center;justify-content:center;gap:3px;color:#fff;padding:3px 6px;border-radius:10px;font-size:11px;font-weight:800;border:2px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.35);white-space:nowrap}.bus-marker-pin.stale{opacity:.65}.map-legend{background:#fff;padding:7px 10px;border-radius:9px;box-shadow:0 2px 8px rgba(0,0,0,.12);font-size:11px;line-height:1.5;max-width:min(360px,calc(100vw - 28px))}.legend-row{display:flex;align-items:center;gap:7px;margin:2px 0}.legend-dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}.legend-error{color:var(--danger)}.legend-stale{color:var(--warning)}.popup{font-size:13px;line-height:1.5;min-width:170px}.popup-title{font-size:15px;font-weight:800;margin-bottom:4px}.popup-muted{color:var(--text-muted);font-size:11px;margin-top:5px}@media(max-width:520px){header{padding-left:14px;padding-right:14px}.controls{padding-left:12px;padding-right:12px}.brand p{letter-spacing:.5px}.btn-geo{padding:7px 10px}.btn-add{padding:0 13px}}
+</style>
 </head>
 <body>
+<header><div class="brand"><div class="brand-icon">🚌</div><div><h1>Cadê o Ônibus?</h1><p>Mobilidade Carioca • Sem Pressa</p></div></div><button id="btnGeo" class="btn-geo" onclick="localizarUsuario()">📍 Onde estou</button></header>
+<section class="controls"><div class="search-card"><label>Quais linhas você quer monitorar?</label><div class="input-group"><div class="input-wrapper"><span>🔍</span><input id="linhaInput" type="text" inputmode="numeric" autocomplete="off" placeholder="Ex: 232, 606, 693..." aria-label="Número da linha"></div><button id="btnAdd" class="btn-add" onclick="adicionarLinha()">Adicionar</button></div><div class="quick-tags"><span>Tente:</span><button class="tag-btn" onclick="atalhoLinha('232')">232</button><button class="tag-btn" onclick="atalhoLinha('606')">606</button><button class="tag-btn" onclick="atalhoLinha('693')">693</button><button class="tag-btn" onclick="atalhoLinha('2345')">2345</button></div><div class="chips-container" id="chipsContainer"></div><div id="status-msg">Adicione uma linha acima para iniciar o monitoramento.</div></div></section>
+<main id="map-container"><div id="map"></div></main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ==================== CONFIGURAÇÃO V2 ====================
+const CONFIG={
+ API_URL:'https://dados.mobilidade.rio/gps/sppo',
+ PROXIES:[u=>u,u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,u=>`https://corsproxy.io/?${encodeURIComponent(u)}`],
+ INTERVALO_ATUALIZACAO:15000,
+ TIMEOUT_REQUISICAO:9000,
+ DADO_STALE_MS:120000,
+ CORES_DEFAULT:['#1b6354','#e65100','#1565c0','#7b1fa2','#c62828','#0284c7']
+};
+const linhasAtivas={};let corIndex=0,userMarker=null,intervaloAtualizacao=null,atualizacaoEmAndamento=false;
+const map=L.map('map',{zoomControl:false,preferCanvas:true}).setView([-22.9068,-43.1729],12);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);L.control.zoom({position:'bottomright'}).addTo(map);
+const legendaGlobal=L.control({position:'bottomleft'});legendaGlobal.onAdd=()=>{const d=L.DomUtil.create('div','map-legend');d.id='mapLegend';L.DomEvent.disableClickPropagation(d);return d};legendaGlobal.addTo(map);
 
-  <header>
-    <div class="brand">
-      <div class="brand-icon">🚌</div>
-      <div>
-        <h1>Cadê o Ônibus?</h1>
-        <p>Mobilidade Carioca • Sem Pressa</p>
-      </div>
-    </div>
-    <button class="btn-geo" onclick="localizarUsuario()">📍 Onde estou</button>
-  </header>
+// ==================== UTILITÁRIOS ====================
+function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;')}
+function norm(v){return String(v??'').trim()}
+function key(v){return norm(v).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'')}
+function num(v){if(v===null||v===undefined||v==='')return false;return Number.isFinite(Number(String(v).replace(',','.')))}
+function coord(lat,lng){return num(lat)&&num(lng)&&Math.abs(Number(lat))<=90&&Math.abs(Number(lng))<=180&&!(Number(lat)===0&&Number(lng)===0)}
+function campo(o,nomes){if(!o||typeof o!=='object')return;const ks=Object.keys(o);for(const n of nomes){if(o[n]!==undefined&&o[n]!==null)return o[n];const alvo=key(n),k=ks.find(x=>key(x)===alvo);if(k!==undefined&&o[k]!==undefined&&o[k]!==null)return o[k]}}
+function timestamp(bus){for(const v of [bus.datetime,bus.timestamp,bus.datahora,bus.data_hora,bus.dt_gps,bus.hora,bus.last_update,bus.updated_at]){if(v===null||v===undefined||v==='')continue;if(typeof v==='number'||/^\d+$/.test(String(v).trim())){let n=Number(v);if(n<100000000000)n*=1000;const d=new Date(n);if(!Number.isNaN(d.getTime()))return d}const d=new Date(v);if(!Number.isNaN(d.getTime()))return d}return null}
+function idade(bus){const d=timestamp(bus);return d?Math.max(0,Date.now()-d.getTime()):null}
+function stale(bus){const i=idade(bus);return i!==null&&i>CONFIG.DADO_STALE_MS}
+function idadeTexto(ms){if(ms===null)return'idade do GPS não informada';const s=Math.floor(ms/1000);if(s<60)return`há ${s}s`;const m=Math.floor(s/60);if(m<60)return`há ${m} min`;const h=Math.floor(m/60);return`há ${h}h ${m%60}min`}
+function dataTexto(d){return d?d.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}):'não informado'}
+function vel(v){return num(v)?`${Math.max(0,Number(v)).toFixed(0)} km/h`:'N/D'}
 
-  <section class="controls">
-    <div class="search-card">
-      <label>Quais linhas você quer monitorar?</label>
-      <div class="input-group">
-        <div class="input-wrapper">
-          <span>🔍</span>
-          <input id="linhaInput" type="text" placeholder="Ex: 232, 606, 693..." />
-        </div>
-        <button class="btn-add" onclick="adicionarLinha()">Adicionar</button>
-      </div>
+// ==================== NORMALIZAÇÃO ====================
+function colunar(data){if(!data||!Array.isArray(data.DATA))return null;const cols=Array.isArray(data.COLUMNS)?data.COLUMNS:Array.isArray(data.columns)?data.columns:[];if(!cols.length)return null;return data.DATA.map(row=>{const o={};cols.forEach((c,i)=>o[c]=Array.isArray(row)?row[i]:undefined);return o})}
+function lista(data){if(Array.isArray(data))return data;const c=colunar(data);if(c)return c;for(const x of [data?.DATA,data?.data,data?.vehicles,data?.veiculos,data?.results,data?.results?.vehicles,data?.features])if(Array.isArray(x))return x;return[]}
+function normalizar(raw,linha){if(!raw||typeof raw!=='object')return null;const p=raw.properties&&typeof raw.properties==='object'?{...raw.properties,...raw}:raw;let lat=campo(p,['latitude','lat','y']),lng=campo(p,['longitude','lon','lng','long','x']);if((!num(lat)||!num(lng))&&raw.geometry?.coordinates?.length){lng=raw.geometry.coordinates[0];lat=raw.geometry.coordinates[1]}if(!coord(lat,lng))return null;return{...p,linha:norm(campo(p,['linha','line','route','route_id','servico','service']))||linha,ordem:norm(campo(p,['ordem','id_veiculo','idVeiculo','veiculo','vehicle_id','vehicleId','carro','id']))||'N/D',latitude:Number(lat),longitude:Number(lng),velocidade:num(campo(p,['velocidade','speed','vel']))?Number(campo(p,['velocidade','speed','vel'])):null,direcao:norm(campo(p,['direcao','direção','direction','sentido','trip_headsign']))||'N/D',datetime:campo(p,['datetime','timestamp','datahora','data_hora','dt_gps','hora','last_update','updated_at'])??null,trip_id:norm(campo(p,['trip_id','tripId'])),route_id:norm(campo(p,['route_id','routeId']))}}
+function daLinha(bus,linha){const alvo=norm(linha).toUpperCase();const vals=[bus.linha,bus.route_id,bus.servico,bus.service].filter(Boolean).map(v=>norm(v).toUpperCase());if(!vals.length)return true;return vals.some(v=>v===alvo||v.replace(/^0+/,'')===alvo.replace(/^0+/,''))}
+function normalizarResposta(data,linha){return lista(data).map(x=>normalizar(x,linha)).filter(Boolean).filter(x=>daLinha(x,linha))}
 
-      <div class="quick-tags">
-        <span>Tente:</span>
-        <button class="tag-btn" onclick="atalhoLinha('232')">232</button>
-        <button class="tag-btn" onclick="atalhoLinha('606')">606</button>
-        <button class="tag-btn" onclick="atalhoLinha('693')">693</button>
-        <button class="tag-btn" onclick="atalhoLinha('2345')">2345</button>
-      </div>
+// ==================== REDE ====================
+async function fetchTimeout(url){const c=new AbortController(),t=setTimeout(()=>c.abort(),CONFIG.TIMEOUT_REQUISICAO);try{const r=await fetch(url,{cache:'no-store',signal:c.signal,headers:{Accept:'application/json,text/plain,*/*'}});if(!r.ok)throw Error(`HTTP ${r.status}`);const txt=await r.text();if(!txt.trim())throw Error('Resposta vazia');try{return JSON.parse(txt)}catch{throw Error('Resposta não é JSON válido')}}finally{clearTimeout(t)}}
+async function buscarDadosLinha(linha){const target=`${CONFIG.API_URL}?linha=${encodeURIComponent(linha)}`;let erro=null;for(const mk of CONFIG.PROXIES){try{const data=await fetchTimeout(mk(target));return{ok:true,veiculos:normalizarResposta(data,linha),fonte:mk===CONFIG.PROXIES[0]?'SMTR direto':'proxy',erro:null}}catch(e){erro=e}}return{ok:false,veiculos:[],fonte:null,erro:erro||Error('Falha de rede')}}
 
-      <div class="chips-container" id="chipsContainer"></div>
-      <div id="status-msg">Adicione uma linha acima para iniciar o monitoramento.</div>
-    </div>
-  </section>
+// ==================== LINHAS / UI ====================
+function atalhoLinha(l){document.getElementById('linhaInput').value=l;adicionarLinha()}
+async function adicionarLinha(){const input=document.getElementById('linhaInput'),linha=norm(input.value).toUpperCase();if(!linha){mostrarStatus('⚠️ Digite o número da linha.');input.focus();return}if(linhasAtivas[linha]){mostrarStatus(`⚠️ Linha ${linha} já está sendo monitorada.`);input.value='';return}const cor=CONFIG.CORES_DEFAULT[corIndex++%CONFIG.CORES_DEFAULT.length];linhasAtivas[linha]={color:cor,layerGroup:L.layerGroup().addTo(map),ultimosDados:[],markers:new Map(),circles:new Map(),lastSuccess:null,lastAttempt:null,error:null,fonte:null,carregando:false,primeiraCarga:true};input.value='';renderChips();atualizarLegenda();atualizarStatusGeral();await buscarEDesenharLinha(linha,true)}
+function removerLinha(l){const i=linhasAtivas[l];if(!i)return;map.removeLayer(i.layerGroup);delete linhasAtivas[l];renderChips();atualizarLegenda();atualizarStatusGeral()}
+function mudarCorLinha(l,c){const i=linhasAtivas[l];if(!i)return;i.color=c;i.markers.forEach((m)=>m.setIcon(icone(l,c,false)));i.circles.forEach(x=>x.setStyle({color:c,fillColor:c}));renderChips();atualizarLegenda()}
+function renderChips(){const c=document.getElementById('chipsContainer');c.innerHTML='';Object.keys(linhasAtivas).forEach(l=>{const i=linhasAtivas[l],chip=document.createElement('div');chip.className='line-chip';const color=document.createElement('input');color.type='color';color.className='color-picker-input';color.value=i.color;color.title='Mudar cor';color.onchange=e=>mudarCorLinha(l,e.target.value);const s=document.createElement('span');s.textContent=`Linha ${l}`;const b=document.createElement('button');b.className='chip-remove';b.type='button';b.textContent='×';b.title=`Remover linha ${l}`;b.onclick=()=>removerLinha(l);chip.append(color,s,b);c.appendChild(chip)})}
+function mostrarStatus(t){document.getElementById('status-msg').textContent=t}
 
-  <main id="map-container">
-    <div id="map"></div>
-  </main>
+// ==================== MAPA / VEÍCULOS ====================
+function icone(linha,cor,isStale){return L.divIcon({className:'custom-bus-pin',html:`<div class="bus-marker-pin${isStale?' stale':''}" style="background:${esc(cor)};">🚌 ${esc(linha)}</div>`,iconSize:[64,22],iconAnchor:[32,11],popupAnchor:[0,-10]})}
+function idVeiculo(b){return norm(b.ordem||b.id_veiculo||b.vehicle_id||b.trip_id||`${b.latitude}:${b.longitude}`)}
+function popup(marker,b,cor){const d=timestamp(b),i=idade(b),s=stale(b);marker.bindPopup(`<div class="popup"><div class="popup-title" style="color:${esc(cor)};">Linha ${esc(b.linha)}</div><div><b>Carro:</b> ${esc(b.ordem||'N/D')}</div><div><b>Velocidade:</b> ${esc(vel(b.velocidade))}</div><div><b>Sentido:</b> ${esc(b.direcao||'N/D')}</div><div class="popup-muted">GPS: ${esc(dataTexto(d))}<br>${esc(idadeTexto(i))}${s?'<br><span class="legend-stale">⚠️ Dado possivelmente desatualizado</span>':''}</div></div>`)}
+function atualizarVeiculos(info,linha,veiculos){const ativos=new Set;for(const b of veiculos){const id=idVeiculo(b);ativos.add(id);const pos=[b.latitude,b.longitude],s=stale(b);let m=info.markers.get(id),c=info.circles.get(id);if(!m){m=L.marker(pos,{icon:icone(linha,info.color,s),zIndexOffset:1000}).addTo(info.layerGroup);info.markers.set(id,m)}else{m.setLatLng(pos);m.setIcon(icone(linha,info.color,s))}if(!c){c=L.circle(pos,{radius:25,color:info.color,fillColor:info.color,fillOpacity:.15,weight:1.5}).addTo(info.layerGroup);info.circles.set(id,c)}else{c.setLatLng(pos);c.setStyle({color:info.color,fillColor:info.color})}popup(m,b,info.color)}for(const[id,m]of info.markers)if(!ativos.has(id)){info.layerGroup.removeLayer(m);info.markers.delete(id)}for(const[id,c]of info.circles)if(!ativos.has(id)){info.layerGroup.removeLayer(c);info.circles.delete(id)}}
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+// Não há itinerários artificiais na V2. A V1 usava pontos aproximados e
+// misturava esses pontos com o GPS real. Isso foi removido: GPS é soberano.
 
-  <script>
-    // ==================== CONFIGURAÇÕES ====================
-    const CORES_DEFAULT = ['#1b6354', '#e65100', '#1565c0', '#7b1fa2', '#c62828', '#0284c7'];
-    const INTERVALO_ATUALIZACAO = 5000;
-    const RAIO_GPS_PRECISAO = 25; // Raio reduzido para maior precisão
-    
-    // ==================== ESTADO GLOBAL ====================
-    const linhasAtivas = {};
-    let corIndex = 0;
-    let userMarker = null;
-    let intervaloAtualizacao = null;
+async function buscarEDesenharLinha(linha,fit=false){const info=linhasAtivas[linha];if(!info||info.carregando)return;info.carregando=true;info.lastAttempt=Date.now();try{const r=await buscarDadosLinha(linha);if(!linhasAtivas[linha])return;if(!r.ok){info.error=r.erro;atualizarLegenda();atualizarStatusGeral();return}info.error=null;info.fonte=r.fonte;info.ultimosDados=r.veiculos;info.lastSuccess=Date.now();info.primeiraCarga=false;atualizarVeiculos(info,linha,r.veiculos);if(fit&&r.veiculos.length){const pts=r.veiculos.map(b=>[b.latitude,b.longitude]);if(pts.length===1)map.setView(pts[0],Math.min(map.getZoom(),15));else map.fitBounds(pts,{padding:[80,80],maxZoom:14})}atualizarLegenda();atualizarStatusGeral()}catch(e){info.error=e;atualizarLegenda();atualizarStatusGeral()}finally{if(linhasAtivas[linha])linhasAtivas[linha].carregando=false}}
 
-    // ==================== MAPA ====================
-    const map = L.map('map', { zoomControl: false }).setView([-22.9068, -43.1729], 12);
-    
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap'
-    }).addTo(map);
+function atualizarLegenda(){const d=document.getElementById('mapLegend');const entries=Object.entries(linhasAtivas);if(!entries.length){d.innerHTML='';d.style.display='none';return}d.style.display='block';d.innerHTML=entries.map(([l,i])=>{const erro=!!i.error,ult=i.lastSuccess?`atualizado ${idadeTexto(Date.now()-i.lastSuccess)}`:'aguardando dados';return`<div class="legend-row"><span class="legend-dot" style="background:${esc(i.color)}"></span><span><b style="color:${esc(i.color)}">Linha ${esc(l)}</b> · ${i.ultimosDados.length} ônibus · ${esc(ult)}${erro?'<span class="legend-error"> · sem atualização</span>':''}</span></div>`}).join('')}
+function atualizarStatusGeral(){const a=Object.values(linhasAtivas),n=a.length;if(!n){mostrarStatus('➕ Adicione uma linha acima para iniciar o monitoramento.');return}const total=a.reduce((x,i)=>x+i.ultimosDados.length,0),erros=a.filter(i=>i.error).length;if(erros===n&&a.every(i=>i.primeiraCarga)){mostrarStatus('⚠️ Não foi possível obter os dados agora. Tentando novamente...');return}let t=`🚌 ${n} linha(s) | ${total} ônibus monitorados`;t+=erros?` | ⚠️ ${erros} sem atualização`:` | atualização a cada ${CONFIG.INTERVALO_ATUALIZACAO/1000}s`;mostrarStatus(t)}
 
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
+// ==================== ATUALIZAÇÃO ====================
+async function atualizarTodasLinhas(){const ls=Object.keys(linhasAtivas);if(!ls.length||atualizacaoEmAndamento)return;atualizacaoEmAndamento=true;try{await Promise.allSettled(ls.map(l=>buscarEDesenharLinha(l,false)))}finally{atualizacaoEmAndamento=false}}
+function iniciarAtualizacao(){if(intervaloAtualizacao)clearInterval(intervaloAtualizacao);intervaloAtualizacao=setInterval(atualizarTodasLinhas,CONFIG.INTERVALO_ATUALIZACAO)}
 
-    // ==================== ROTAS REAIS DAS LINHAS (Itinerários) ====================
-    // Baseado em dados reais das linhas do Rio de Janeiro
-    const ITINERARIOS = {
-      '232': {
-        nome: 'Castelo x Recreio',
-        pontos: [
-          [-22.9195, -43.2798], [-22.9180, -43.2750], [-22.9165, -43.2700],
-          [-22.9150, -43.2650], [-22.9135, -43.2600], [-22.9120, -43.2550],
-          [-22.9105, -43.2500], [-22.9090, -43.2450], [-22.9075, -43.2400],
-          [-22.9060, -43.2350], [-22.9045, -43.2300], [-22.9030, -43.2250],
-          [-22.9015, -43.2200], [-22.9000, -43.2150], [-22.8985, -43.2100],
-          [-22.8970, -43.2050], [-22.8955, -43.2000], [-22.8940, -43.1950],
-          [-22.8925, -43.1900], [-22.8910, -43.1850], [-22.8895, -43.1800]
-        ]
-      },
-      '606': {
-        nome: 'Saens Peña x Gávea',
-        pontos: [
-          [-22.9240, -43.2980], [-22.9220, -43.2900], [-22.9200, -43.2820],
-          [-22.9180, -43.2740], [-22.9160, -43.2660], [-22.9140, -43.2580],
-          [-22.9120, -43.2500], [-22.9100, -43.2420], [-22.9080, -43.2340],
-          [-22.9060, -43.2260], [-22.9040, -43.2180], [-22.9020, -43.2100],
-          [-22.9000, -43.2020], [-22.8980, -43.1940], [-22.8960, -43.1860],
-          [-22.8940, -43.1780], [-22.8920, -43.1700]
-        ]
-      },
-      '693': {
-        nome: 'Méier x Copacabana',
-        pontos: [
-          [-22.8980, -43.2100], [-22.8990, -43.2070], [-22.9000, -43.2040],
-          [-22.9010, -43.2010], [-22.9020, -43.1980], [-22.9030, -43.1950],
-          [-22.9040, -43.1920], [-22.9050, -43.1890], [-22.9060, -43.1860],
-          [-22.9070, -43.1830], [-22.9080, -43.1800], [-22.9090, -43.1770],
-          [-22.9100, -43.1740], [-22.9110, -43.1710], [-22.9120, -43.1680],
-          [-22.9130, -43.1650], [-22.9140, -43.1620], [-22.9150, -43.1590],
-          [-22.9160, -43.1560], [-22.9170, -43.1530], [-22.9180, -43.1500]
-        ]
-      },
-      '2345': {
-        nome: 'Santa Cruz x Castelo',
-        pontos: [
-          [-23.0010, -43.3400], [-22.9980, -43.3300], [-22.9950, -43.3200],
-          [-22.9920, -43.3100], [-22.9890, -43.3000], [-22.9860, -43.2900],
-          [-22.9830, -43.2800], [-22.9800, -43.2700], [-22.9770, -43.2600],
-          [-22.9740, -43.2500], [-22.9710, -43.2400], [-22.9680, -43.2300],
-          [-22.9650, -43.2200], [-22.9620, -43.2100], [-22.9590, -43.2000],
-          [-22.9560, -43.1900], [-22.9530, -43.1800], [-22.9500, -43.1700]
-        ]
-      }
-    };
+// ==================== LOCALIZAÇÃO ====================
+function localizarUsuario(){const b=document.getElementById('btnGeo');if(!navigator.geolocation){alert('📍 Geolocalização não disponível neste dispositivo.');return}b.disabled=true;b.textContent='⏳ Buscando...';navigator.geolocation.getCurrentPosition(p=>{const{latitude:lat,longitude:lng,accuracy}=p.coords;if(userMarker)map.removeLayer(userMarker);userMarker=L.circleMarker([lat,lng],{radius:10,fillColor:'#007aff',color:'#fff',weight:3,opacity:1,fillOpacity:1}).addTo(map);userMarker.bindPopup(`📍 <b>Você está aqui</b><br><span style="font-size:11px;color:#6b7280">Precisão aproximada: ${Math.round(accuracy)} m</span>`).openPopup();map.setView([lat,lng],15);b.disabled=false;b.textContent='📍 Onde estou'},e=>{b.disabled=false;b.textContent='📍 Onde estou';let m='Não foi possível obter sua localização.';if(e.code===1)m+=' Permita o acesso à localização nas configurações.';else if(e.code===2)m+=' O sinal de localização está indisponível.';else if(e.code===3)m+=' A tentativa demorou demais.';alert('📍 '+m)},{enableHighAccuracy:true,timeout:10000,maximumAge:30000})}
 
-    // Itinerário genérico para linhas não mapeadas
-    function getItinerarioGenerico(linha) {
-      const base = [
-        [-22.9100 + Math.random() * 0.02, -43.2000 + Math.random() * 0.02],
-        [-22.9080 + Math.random() * 0.02, -43.1950 + Math.random() * 0.02],
-        [-22.9060 + Math.random() * 0.02, -43.1900 + Math.random() * 0.02],
-        [-22.9040 + Math.random() * 0.02, -43.1850 + Math.random() * 0.02],
-        [-22.9020 + Math.random() * 0.02, -43.1800 + Math.random() * 0.02],
-        [-22.9000 + Math.random() * 0.02, -43.1750 + Math.random() * 0.02],
-        [-22.8980 + Math.random() * 0.02, -43.1700 + Math.random() * 0.02]
-      ];
-      return base.map((p, i) => [
-        p[0] + (i * 0.001),
-        p[1] + (i * 0.001)
-      ]);
-    }
-
-    function getItinerario(linha) {
-      if (ITINERARIOS[linha]) {
-        return ITINERARIOS[linha].pontos;
-      }
-      return getItinerarioGenerico(linha);
-    }
-
-    // ==================== FUNÇÕES PRINCIPAIS ====================
-    
-    function atalhoLinha(linha) {
-      document.getElementById('linhaInput').value = linha;
-      adicionarLinha();
-    }
-
-    function adicionarLinha() {
-      const input = document.getElementById('linhaInput');
-      const linha = input.value.trim().toUpperCase();
-      
-      if (!linha) {
-        document.getElementById('status-msg').innerText = '⚠️ Digite o número da linha.';
-        return;
-      }
-      
-      if (linhasAtivas[linha]) {
-        document.getElementById('status-msg').innerText = `⚠️ Linha ${linha} já está sendo monitorada.`;
-        input.value = '';
-        return;
-      }
-
-      const cor = CORES_DEFAULT[corIndex % CORES_DEFAULT.length];
-      corIndex++;
-
-      const layerGroup = L.layerGroup().addTo(map);
-      linhasAtivas[linha] = { 
-        color: cor, 
-        layerGroup: layerGroup,
-        ultimosDados: [],
-        itinerario: getItinerario(linha)
-      };
-      
-      input.value = '';
-      renderChips();
-      atualizarStatusGeral();
-      
-      buscarEDesenharLinha(linha, true);
-    }
-
-    function removerLinha(linha) {
-      if (!linhasAtivas[linha]) return;
-      map.removeLayer(linhasAtivas[linha].layerGroup);
-      delete linhasAtivas[linha];
-      renderChips();
-      atualizarStatusGeral();
-    }
-
-    function mudarCorLinha(linha, novaCor) {
-      if (!linhasAtivas[linha]) return;
-      linhasAtivas[linha].color = novaCor;
-      renderChips();
-      buscarEDesenharLinha(linha, false);
-    }
-
-    function renderChips() {
-      const container = document.getElementById('chipsContainer');
-      container.innerHTML = '';
-
-      Object.keys(linhasAtivas).forEach(linha => {
-        const chip = document.createElement('div');
-        chip.className = 'line-chip';
-        chip.innerHTML = `
-          <input type="color" class="color-picker-input" value="${linhasAtivas[linha].color}" 
-                 onchange="mudarCorLinha('${linha}', this.value)" title="Mudar cor">
-          <span>Linha ${linha}</span>
-          <button class="chip-remove" onclick="removerLinha('${linha}')">×</button>
-        `;
-        container.appendChild(chip);
-      });
-    }
-
-    // ==================== BUSCA DE DADOS ====================
-    
-    async function buscarDadosLinha(linha) {
-      const targetUrl = `https://dados.mobilidade.rio/gps/sppo?linha=${encodeURIComponent(linha)}`;
-      
-      const proxies = [
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
-        `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
-        null
-      ];
-
-      for (const proxy of proxies) {
-        if (!proxy) break;
-        
-        try {
-          const response = await fetch(proxy, { 
-            cache: "no-store",
-            headers: { 'Accept': 'application/json' }
-          });
-          
-          if (!response.ok) continue;
-          
-          const texto = await response.text();
-          if (!texto || texto.trim() === '') continue;
-          
-          let data = JSON.parse(texto);
-          let veiculos = [];
-          
-          if (Array.isArray(data) && data.length > 0) {
-            veiculos = data;
-          } else if (data && data.DATA && Array.isArray(data.DATA) && data.DATA.length > 0) {
-            const cols = (data.COLUMNS || []).map(c => c.toLowerCase());
-            const idxLinha = cols.indexOf('linha');
-            const idxLat = cols.indexOf('latitude');
-            const idxLng = cols.indexOf('longitude');
-            const idxOrdem = cols.indexOf('ordem');
-            const idxVel = cols.indexOf('velocidade');
-            
-            veiculos = data.DATA.map(row => ({
-              linha: idxLinha >= 0 ? row[idxLinha] : linha,
-              latitude: idxLat >= 0 ? parseFloat(row[idxLat]) : 0,
-              longitude: idxLng >= 0 ? parseFloat(row[idxLng]) : 0,
-              ordem: idxOrdem >= 0 ? row[idxOrdem] : 'N/D',
-              velocidade: idxVel >= 0 ? parseFloat(row[idxVel]) : 0
-            }));
-          }
-          
-          if (veiculos.length > 0) {
-            return veiculos;
-          }
-        } catch (e) {
-          continue;
-        }
-      }
-
-      return gerarDadosSimulados(linha);
-    }
-
-    function gerarDadosSimulados(linha) {
-      const itinerario = getItinerario(linha);
-      const timestamp = Date.now() / 10000;
-      
-      // Gerar 3-5 ônibus ao longo do itinerário
-      const numBuses = 3 + Math.floor(Math.random() * 3);
-      const buses = [];
-      
-      for (let i = 0; i < numBuses; i++) {
-        const progresso = ((timestamp / 5 + i / numBuses) % 1);
-        const idx = Math.floor(progresso * (itinerario.length - 1));
-        const nextIdx = Math.min(idx + 1, itinerario.length - 1);
-        const frac = (progresso * (itinerario.length - 1)) - idx;
-        
-        const p1 = itinerario[idx];
-        const p2 = itinerario[nextIdx];
-        
-        // Interpolação com pequena variação
-        const lat = p1[0] + (p2[0] - p1[0]) * frac + (Math.random() - 0.5) * 0.0002;
-        const lng = p1[1] + (p2[1] - p1[1]) * frac + (Math.random() - 0.5) * 0.0002;
-        
-        buses.push({
-          linha: linha,
-          ordem: `C${20000 + i * 110 + Math.floor(Math.random() * 50)}`,
-          latitude: lat,
-          longitude: lng,
-          velocidade: 15 + Math.floor(Math.random() * 30)
-        });
-      }
-      
-      return buses;
-    }
-
-    // ==================== DESENHO NO MAPA ====================
-    
-    function desenharItinerario(layerGroup, itinerario, cor) {
-      if (!itinerario || itinerario.length < 2) return;
-      
-      // Desenha a rota completa como uma linha contínua
-      const routeLine = L.polyline(itinerario, {
-        color: cor,
-        weight: 4,
-        opacity: 0.5,
-        smoothFactor: 1,
-        className: 'route-line'
-      }).addTo(layerGroup);
-      
-      // Adiciona pontos de referência no itinerário
-      itinerario.forEach((ponto, index) => {
-        if (index % 3 === 0) { // Mostra apenas alguns pontos para não poluir
-          L.circleMarker(ponto, {
-            radius: 3,
-            color: cor,
-            fillColor: cor,
-            fillOpacity: 0.3,
-            weight: 1
-          }).addTo(layerGroup);
-        }
-      });
-    }
-
-    function encontrarPontoMaisProximo(posicao, itinerario) {
-      let menorDistancia = Infinity;
-      let pontoMaisProximo = null;
-      
-      for (const ponto of itinerario) {
-        const dist = map.distance(posicao, ponto);
-        if (dist < menorDistancia) {
-          menorDistancia = dist;
-          pontoMaisProximo = ponto;
-        }
-      }
-      
-      return pontoMaisProximo;
-    }
-
-    function desenharVeiculos(layerGroup, veiculos, cor, itinerario) {
-      if (!veiculos || veiculos.length === 0) return;
-
-      // Ordenar veículos para melhor visualização
-      const veiculosOrdenados = veiculos.sort((a, b) => {
-        const latA = parseFloat(a.latitude);
-        const latB = parseFloat(b.latitude);
-        return latA - latB;
-      });
-
-      veiculosOrdenados.forEach((bus) => {
-        const lat = parseFloat(bus.latitude);
-        const lng = parseFloat(bus.longitude);
-
-        if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
-          const pos = [lat, lng];
-          
-          // Encontra o ponto mais próximo no itinerário para projetar o ônibus
-          let posicaoProjetada = pos;
-          if (itinerario && itinerario.length > 0) {
-            const pontoProximo = encontrarPontoMaisProximo(pos, itinerario);
-            if (pontoProximo) {
-              // Mistura a posição real com o ponto do itinerário para maior precisão
-              const fatorMix = 0.7; // 70% do ponto real, 30% do itinerário
-              posicaoProjetada = [
-                lat * fatorMix + pontoProximo[0] * (1 - fatorMix),
-                lng * fatorMix + pontoProximo[1] * (1 - fatorMix)
-              ];
-            }
-          }
-
-          // Círculo de precisão reduzido
-          L.circle(posicaoProjetada, {
-            radius: RAIO_GPS_PRECISAO,
-            color: cor,
-            fillColor: cor,
-            fillOpacity: 0.15,
-            weight: 1.5
-          }).addTo(layerGroup);
-
-          // Linha de conexão com o itinerário (opcional)
-          if (itinerario && itinerario.length > 0) {
-            const pontoProximo = encontrarPontoMaisProximo(posicaoProjetada, itinerario);
-            if (pontoProximo) {
-              L.polyline([posicaoProjetada, pontoProximo], {
-                color: cor,
-                weight: 1,
-                opacity: 0.2,
-                dashArray: '3, 5'
-              }).addTo(layerGroup);
-            }
-          }
-
-          // Ícone do ônibus
-          const icone = L.divIcon({
-            className: 'custom-bus-pin',
-            html: `<div class="bus-marker-pin" style="background:${cor};">🚌 ${bus.linha}</div>`,
-            iconSize: [64, 22],
-            iconAnchor: [32, 11]
-          });
-
-          L.marker(posicaoProjetada, { icon: icone }).addTo(layerGroup)
-            .bindPopup(`
-              <div style="font-size:13px; line-height: 1.4;">
-                <b style="color:${cor}; font-size:15px;">Linha ${bus.linha}</b><br>
-                <b>Carro:</b> ${bus.ordem || 'N/D'}<br>
-                <b>Velocidade:</b> ${bus.velocidade || 0} km/h
-              </div>
-            `);
-        }
-      });
-    }
-
-    async function buscarEDesenharLinha(linha, deveEnquadrar = false) {
-      const infoLinha = linhasAtivas[linha];
-      if (!infoLinha) return;
-
-      const veiculos = await buscarDadosLinha(linha);
-      infoLinha.ultimosDados = veiculos;
-      
-      // Limpa o layer group
-      infoLinha.layerGroup.clearLayers();
-
-      const cor = infoLinha.color;
-      const itinerario = infoLinha.itinerario;
-
-      // Desenha o itinerário da linha
-      desenharItinerario(infoLinha.layerGroup, itinerario, cor);
-
-      // Desenha os veículos
-      desenharVeiculos(infoLinha.layerGroup, veiculos, cor, itinerario);
-
-      // Adiciona legenda da linha
-      const legenda = L.control({ position: 'bottomleft' });
-      legenda.onAdd = function() {
-        const div = L.DomUtil.create('div', 'info legend');
-        div.style.background = 'white';
-        div.style.padding = '6px 10px';
-        div.style.borderRadius = '8px';
-        div.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-        div.style.fontSize = '11px';
-        div.style.fontWeight = '600';
-        div.style.border = '2px solid ' + cor;
-        div.innerHTML = `
-          <span style="color:${cor};">🚌 Linha ${linha}</span>
-          <span style="color:#6b7280; margin-left:8px; font-weight:400;">${veiculos.length} ônibus</span>
-        `;
-        return div;
-      };
-      
-      // Remove legendas anteriores da mesma linha
-      Object.values(linhasAtivas).forEach(info => {
-        if (info.legenda) {
-          map.removeControl(info.legenda);
-        }
-      });
-      
-      // Adiciona nova legenda
-      infoLinha.legenda = legenda;
-      legenda.addTo(map);
-
-      if (deveEnquadrar && veiculos.length > 0) {
-        const coords = veiculos
-          .filter(b => !isNaN(b.latitude) && !isNaN(b.longitude))
-          .map(b => [b.latitude, b.longitude]);
-        
-        if (coords.length > 0) {
-          map.fitBounds(coords, { padding: [80, 80], maxZoom: 14 });
-        }
-      }
-
-      atualizarStatusGeral();
-    }
-
-    // ==================== ATUALIZAÇÃO PERIÓDICA ====================
-    
-    async function atualizarTodasLinhas() {
-      const linhas = Object.keys(linhasAtivas);
-      if (linhas.length === 0) return;
-      
-      const promessas = linhas.map(linha => buscarEDesenharLinha(linha, false));
-      await Promise.allSettled(promessas);
-    }
-
-    function atualizarStatusGeral() {
-      const totalLinhas = Object.keys(linhasAtivas).length;
-      const statusMsg = document.getElementById('status-msg');
-      
-      if (totalLinhas === 0) {
-        statusMsg.innerText = '➕ Adicione uma linha acima para iniciar o monitoramento.';
-      } else {
-        let totalVeiculos = 0;
-        Object.values(linhasAtivas).forEach(info => {
-          totalVeiculos += (info.ultimosDados ? info.ultimosDados.length : 0);
-        });
-        statusMsg.innerText = `🚌 ${totalLinhas} linha(s) | ${totalVeiculos} ônibus em tempo real (atualização a cada ${INTERVALO_ATUALIZACAO/1000}s)`;
-      }
-    }
-
-    // ==================== LOCALIZAÇÃO DO USUÁRIO ====================
-    
-    function localizarUsuario() {
-      if (!navigator.geolocation) {
-        alert('📍 Geolocalização não disponível neste dispositivo.');
-        return;
-      }
-      
-      document.querySelector('.btn-geo').textContent = '⏳ Buscando...';
-      
-      navigator.geolocation.getCurrentPosition(
-        pos => {
-          const { latitude: lat, longitude: lng } = pos.coords;
-          
-          if (userMarker) map.removeLayer(userMarker);
-
-          userMarker = L.circleMarker([lat, lng], {
-            radius: 10,
-            fillColor: '#007aff',
-            color: '#ffffff',
-            weight: 3,
-            opacity: 1,
-            fillOpacity: 1
-          }).addTo(map)
-            .bindPopup('📍 <b>Você está aqui</b>')
-            .openPopup();
-
-          map.setView([lat, lng], 15);
-          document.querySelector('.btn-geo').textContent = '📍 Onde estou';
-        },
-        err => {
-          console.error('Erro de geolocalização:', err);
-          document.querySelector('.btn-geo').textContent = '📍 Onde estou';
-          
-          let mensagem = 'Não foi possível obter sua localização. ';
-          if (err.code === 1) mensagem += 'Permita o acesso nas configurações.';
-          else if (err.code === 2) mensagem += 'Sinal indisponível.';
-          else mensagem += 'Tente novamente.';
-          
-          alert('📍 ' + mensagem);
-        },
-        { 
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 30000
-        }
-      );
-    }
-
-    // ==================== INICIALIZAÇÃO ====================
-    
-    if (intervaloAtualizacao) clearInterval(intervaloAtualizacao);
-    intervaloAtualizacao = setInterval(atualizarTodasLinhas, INTERVALO_ATUALIZACAO);
-
-    document.getElementById('linhaInput').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') adicionarLinha();
-    });
-
-    console.log('🚌 Cadê o Ônibus? - Monitoramento de ônibus do Rio de Janeiro');
-    console.log('💡 Adicione uma linha para começar!');
-  </script>
-</body>
-</html>
+document.getElementById('linhaInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();adicionarLinha()}});iniciarAtualizacao();atualizarLegenda();atualizarStatusGeral();console.log('🚌 Cadê o Ônibus? V2 — GPS público SMTR, sem simulação.');
+</script>
+</body></html>
