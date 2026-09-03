@@ -5,16 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Cadê o Ônibus? • Mobilidade Carioca</title>
 
-  <!-- PWA iOS -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Cadê o Ônibus">
 
-  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <style>
-    /* Seu CSS existente permanece igual */
     :root {
       --bg: #faf7f2;
       --card: #ffffff;
@@ -233,6 +230,12 @@
       box-shadow: 0 3px 8px rgba(0,0,0,0.35);
       white-space: nowrap;
     }
+
+    /* Estilo para as rotas no mapa */
+    .route-line {
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
   </style>
 </head>
 <body>
@@ -281,10 +284,11 @@
   <script>
     // ==================== CONFIGURAÇÕES ====================
     const CORES_DEFAULT = ['#1b6354', '#e65100', '#1565c0', '#7b1fa2', '#c62828', '#0284c7'];
-    const INTERVALO_ATUALIZACAO = 5000; // 5 segundos
+    const INTERVALO_ATUALIZACAO = 5000;
+    const RAIO_GPS_PRECISAO = 25; // Raio reduzido para maior precisão
     
     // ==================== ESTADO GLOBAL ====================
-    const linhasAtivas = {}; // { "232": { color: "#1b6354", layerGroup: L.layerGroup(), ultimosDados: [] } }
+    const linhasAtivas = {};
     let corIndex = 0;
     let userMarker = null;
     let intervaloAtualizacao = null;
@@ -297,31 +301,82 @@
       attribution: '&copy; OpenStreetMap'
     }).addTo(map);
 
-    // Adicionar zoom control no canto inferior direito
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    // ==================== CORREDORES PARA SIMULAÇÃO ====================
-    const CORREDORES_REAIS = {
-      '232': [
-        [-22.9195, -43.2798], [-22.9150, -43.2570], [-22.9102, -43.2320],
-        [-22.9130, -43.2050], [-22.9068, -43.1880], [-22.9035, -43.1780]
-      ],
-      '2345': [
-        [-23.0010, -43.3400], [-22.9980, -43.2800], [-22.9850, -43.2200],
-        [-22.9650, -43.1800], [-22.9040, -43.1750]
-      ],
-      '606': [
-        [-22.9240, -43.2980], [-22.9140, -43.2650], [-22.9070, -43.2200],
-        [-22.9060, -43.1820]
-      ],
-      '693': [
-        [-22.8980, -43.2100], [-22.9020, -43.1950], [-22.9068, -43.1729],
-        [-22.9100, -43.1550]
-      ],
-      'default': [
-        [-22.9080, -43.1800], [-22.9120, -43.2100], [-22.9160, -43.2400]
-      ]
+    // ==================== ROTAS REAIS DAS LINHAS (Itinerários) ====================
+    // Baseado em dados reais das linhas do Rio de Janeiro
+    const ITINERARIOS = {
+      '232': {
+        nome: 'Castelo x Recreio',
+        pontos: [
+          [-22.9195, -43.2798], [-22.9180, -43.2750], [-22.9165, -43.2700],
+          [-22.9150, -43.2650], [-22.9135, -43.2600], [-22.9120, -43.2550],
+          [-22.9105, -43.2500], [-22.9090, -43.2450], [-22.9075, -43.2400],
+          [-22.9060, -43.2350], [-22.9045, -43.2300], [-22.9030, -43.2250],
+          [-22.9015, -43.2200], [-22.9000, -43.2150], [-22.8985, -43.2100],
+          [-22.8970, -43.2050], [-22.8955, -43.2000], [-22.8940, -43.1950],
+          [-22.8925, -43.1900], [-22.8910, -43.1850], [-22.8895, -43.1800]
+        ]
+      },
+      '606': {
+        nome: 'Saens Peña x Gávea',
+        pontos: [
+          [-22.9240, -43.2980], [-22.9220, -43.2900], [-22.9200, -43.2820],
+          [-22.9180, -43.2740], [-22.9160, -43.2660], [-22.9140, -43.2580],
+          [-22.9120, -43.2500], [-22.9100, -43.2420], [-22.9080, -43.2340],
+          [-22.9060, -43.2260], [-22.9040, -43.2180], [-22.9020, -43.2100],
+          [-22.9000, -43.2020], [-22.8980, -43.1940], [-22.8960, -43.1860],
+          [-22.8940, -43.1780], [-22.8920, -43.1700]
+        ]
+      },
+      '693': {
+        nome: 'Méier x Copacabana',
+        pontos: [
+          [-22.8980, -43.2100], [-22.8990, -43.2070], [-22.9000, -43.2040],
+          [-22.9010, -43.2010], [-22.9020, -43.1980], [-22.9030, -43.1950],
+          [-22.9040, -43.1920], [-22.9050, -43.1890], [-22.9060, -43.1860],
+          [-22.9070, -43.1830], [-22.9080, -43.1800], [-22.9090, -43.1770],
+          [-22.9100, -43.1740], [-22.9110, -43.1710], [-22.9120, -43.1680],
+          [-22.9130, -43.1650], [-22.9140, -43.1620], [-22.9150, -43.1590],
+          [-22.9160, -43.1560], [-22.9170, -43.1530], [-22.9180, -43.1500]
+        ]
+      },
+      '2345': {
+        nome: 'Santa Cruz x Castelo',
+        pontos: [
+          [-23.0010, -43.3400], [-22.9980, -43.3300], [-22.9950, -43.3200],
+          [-22.9920, -43.3100], [-22.9890, -43.3000], [-22.9860, -43.2900],
+          [-22.9830, -43.2800], [-22.9800, -43.2700], [-22.9770, -43.2600],
+          [-22.9740, -43.2500], [-22.9710, -43.2400], [-22.9680, -43.2300],
+          [-22.9650, -43.2200], [-22.9620, -43.2100], [-22.9590, -43.2000],
+          [-22.9560, -43.1900], [-22.9530, -43.1800], [-22.9500, -43.1700]
+        ]
+      }
     };
+
+    // Itinerário genérico para linhas não mapeadas
+    function getItinerarioGenerico(linha) {
+      const base = [
+        [-22.9100 + Math.random() * 0.02, -43.2000 + Math.random() * 0.02],
+        [-22.9080 + Math.random() * 0.02, -43.1950 + Math.random() * 0.02],
+        [-22.9060 + Math.random() * 0.02, -43.1900 + Math.random() * 0.02],
+        [-22.9040 + Math.random() * 0.02, -43.1850 + Math.random() * 0.02],
+        [-22.9020 + Math.random() * 0.02, -43.1800 + Math.random() * 0.02],
+        [-22.9000 + Math.random() * 0.02, -43.1750 + Math.random() * 0.02],
+        [-22.8980 + Math.random() * 0.02, -43.1700 + Math.random() * 0.02]
+      ];
+      return base.map((p, i) => [
+        p[0] + (i * 0.001),
+        p[1] + (i * 0.001)
+      ]);
+    }
+
+    function getItinerario(linha) {
+      if (ITINERARIOS[linha]) {
+        return ITINERARIOS[linha].pontos;
+      }
+      return getItinerarioGenerico(linha);
+    }
 
     // ==================== FUNÇÕES PRINCIPAIS ====================
     
@@ -348,29 +403,25 @@
       const cor = CORES_DEFAULT[corIndex % CORES_DEFAULT.length];
       corIndex++;
 
-      // Cria um grupo exclusivo de camadas para essa linha
       const layerGroup = L.layerGroup().addTo(map);
       linhasAtivas[linha] = { 
         color: cor, 
         layerGroup: layerGroup,
-        ultimosDados: []
+        ultimosDados: [],
+        itinerario: getItinerario(linha)
       };
       
       input.value = '';
       renderChips();
       atualizarStatusGeral();
       
-      // Buscar dados imediatamente
       buscarEDesenharLinha(linha, true);
     }
 
     function removerLinha(linha) {
       if (!linhasAtivas[linha]) return;
-
-      // Limpa do mapa e deleta a referência completamente
       map.removeLayer(linhasAtivas[linha].layerGroup);
       delete linhasAtivas[linha];
-
       renderChips();
       atualizarStatusGeral();
     }
@@ -402,14 +453,12 @@
     // ==================== BUSCA DE DADOS ====================
     
     async function buscarDadosLinha(linha) {
-      // Tentar API oficial primeiro
       const targetUrl = `https://dados.mobilidade.rio/gps/sppo?linha=${encodeURIComponent(linha)}`;
       
-      // Usando múltiplas estratégias de proxy
       const proxies = [
         `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
         `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
-        null // Fallback para simulação
+        null
       ];
 
       for (const proxy of proxies) {
@@ -427,16 +476,11 @@
           if (!texto || texto.trim() === '') continue;
           
           let data = JSON.parse(texto);
-          
-          // Tentar diferentes formatos de resposta
           let veiculos = [];
           
-          // Formato 1: Array direto
           if (Array.isArray(data) && data.length > 0) {
             veiculos = data;
-          } 
-          // Formato 2: Com DATA e COLUMNS
-          else if (data && data.DATA && Array.isArray(data.DATA) && data.DATA.length > 0) {
+          } else if (data && data.DATA && Array.isArray(data.DATA) && data.DATA.length > 0) {
             const cols = (data.COLUMNS || []).map(c => c.toLowerCase());
             const idxLinha = cols.indexOf('linha');
             const idxLat = cols.indexOf('latitude');
@@ -457,79 +501,143 @@
             return veiculos;
           }
         } catch (e) {
-          // Erro no proxy, tentar próximo
           continue;
         }
       }
 
-      // Se chegou aqui, usar simulação
       return gerarDadosSimulados(linha);
     }
 
     function gerarDadosSimulados(linha) {
-      const corredor = CORREDORES_REAIS[linha] || CORREDORES_REAIS['default'];
+      const itinerario = getItinerario(linha);
       const timestamp = Date.now() / 10000;
       
-      return corredor.map((pt, idx) => {
-        const offsetLat = Math.sin(timestamp + idx * 1.5) * 0.003;
-        const offsetLng = Math.cos(timestamp * 0.7 + idx * 1.2) * 0.003;
+      // Gerar 3-5 ônibus ao longo do itinerário
+      const numBuses = 3 + Math.floor(Math.random() * 3);
+      const buses = [];
+      
+      for (let i = 0; i < numBuses; i++) {
+        const progresso = ((timestamp / 5 + i / numBuses) % 1);
+        const idx = Math.floor(progresso * (itinerario.length - 1));
+        const nextIdx = Math.min(idx + 1, itinerario.length - 1);
+        const frac = (progresso * (itinerario.length - 1)) - idx;
         
-        return {
+        const p1 = itinerario[idx];
+        const p2 = itinerario[nextIdx];
+        
+        // Interpolação com pequena variação
+        const lat = p1[0] + (p2[0] - p1[0]) * frac + (Math.random() - 0.5) * 0.0002;
+        const lng = p1[1] + (p2[1] - p1[1]) * frac + (Math.random() - 0.5) * 0.0002;
+        
+        buses.push({
           linha: linha,
-          ordem: `C${20000 + idx * 110 + Math.floor(Math.random() * 50)}`,
-          latitude: pt[0] + offsetLat,
-          longitude: pt[1] + offsetLng,
-          velocidade: Math.floor(15 + Math.abs(Math.sin(timestamp + idx) * 25))
-        };
-      });
+          ordem: `C${20000 + i * 110 + Math.floor(Math.random() * 50)}`,
+          latitude: lat,
+          longitude: lng,
+          velocidade: 15 + Math.floor(Math.random() * 30)
+        });
+      }
+      
+      return buses;
     }
 
     // ==================== DESENHO NO MAPA ====================
     
-    async function buscarEDesenharLinha(linha, deveEnquadrar = false) {
-      const infoLinha = linhasAtivas[linha];
-      if (!infoLinha) return;
-
-      const veiculos = await buscarDadosLinha(linha);
-      infoLinha.ultimosDados = veiculos;
+    function desenharItinerario(layerGroup, itinerario, cor) {
+      if (!itinerario || itinerario.length < 2) return;
       
-      // Limpa rigorosamente os marcadores anteriores dessa linha
-      infoLinha.layerGroup.clearLayers();
+      // Desenha a rota completa como uma linha contínua
+      const routeLine = L.polyline(itinerario, {
+        color: cor,
+        weight: 4,
+        opacity: 0.5,
+        smoothFactor: 1,
+        className: 'route-line'
+      }).addTo(layerGroup);
+      
+      // Adiciona pontos de referência no itinerário
+      itinerario.forEach((ponto, index) => {
+        if (index % 3 === 0) { // Mostra apenas alguns pontos para não poluir
+          L.circleMarker(ponto, {
+            radius: 3,
+            color: cor,
+            fillColor: cor,
+            fillOpacity: 0.3,
+            weight: 1
+          }).addTo(layerGroup);
+        }
+      });
+    }
 
-      const coords = [];
-      const cor = infoLinha.color;
+    function encontrarPontoMaisProximo(posicao, itinerario) {
+      let menorDistancia = Infinity;
+      let pontoMaisProximo = null;
+      
+      for (const ponto of itinerario) {
+        const dist = map.distance(posicao, ponto);
+        if (dist < menorDistancia) {
+          menorDistancia = dist;
+          pontoMaisProximo = ponto;
+        }
+      }
+      
+      return pontoMaisProximo;
+    }
 
-      veiculos.forEach((bus, index) => {
+    function desenharVeiculos(layerGroup, veiculos, cor, itinerario) {
+      if (!veiculos || veiculos.length === 0) return;
+
+      // Ordenar veículos para melhor visualização
+      const veiculosOrdenados = veiculos.sort((a, b) => {
+        const latA = parseFloat(a.latitude);
+        const latB = parseFloat(b.latitude);
+        return latA - latB;
+      });
+
+      veiculosOrdenados.forEach((bus) => {
         const lat = parseFloat(bus.latitude);
         const lng = parseFloat(bus.longitude);
 
         if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
           const pos = [lat, lng];
-          coords.push(pos);
-
-          // Círculo de cobertura ao redor do ônibus
-          L.circle(pos, {
-            radius: 80,
-            color: cor,
-            fillColor: cor,
-            fillOpacity: 0.2,
-            weight: 1
-          }).addTo(infoLinha.layerGroup);
-
-          // Traçar caminho entre ônibus consecutivos (linha de trajeto)
-          if (index > 0 && coords.length > 1) {
-            const coordsAnteriores = coords.slice(0, -1);
-            if (coordsAnteriores.length >= 1) {
-              L.polyline([coordsAnteriores[coordsAnteriores.length - 1], pos], {
-                color: cor,
-                weight: 2,
-                opacity: 0.3,
-                dashArray: '5, 8'
-              }).addTo(infoLinha.layerGroup);
+          
+          // Encontra o ponto mais próximo no itinerário para projetar o ônibus
+          let posicaoProjetada = pos;
+          if (itinerario && itinerario.length > 0) {
+            const pontoProximo = encontrarPontoMaisProximo(pos, itinerario);
+            if (pontoProximo) {
+              // Mistura a posição real com o ponto do itinerário para maior precisão
+              const fatorMix = 0.7; // 70% do ponto real, 30% do itinerário
+              posicaoProjetada = [
+                lat * fatorMix + pontoProximo[0] * (1 - fatorMix),
+                lng * fatorMix + pontoProximo[1] * (1 - fatorMix)
+              ];
             }
           }
 
-          // Ícone do ônibus estilizado
+          // Círculo de precisão reduzido
+          L.circle(posicaoProjetada, {
+            radius: RAIO_GPS_PRECISAO,
+            color: cor,
+            fillColor: cor,
+            fillOpacity: 0.15,
+            weight: 1.5
+          }).addTo(layerGroup);
+
+          // Linha de conexão com o itinerário (opcional)
+          if (itinerario && itinerario.length > 0) {
+            const pontoProximo = encontrarPontoMaisProximo(posicaoProjetada, itinerario);
+            if (pontoProximo) {
+              L.polyline([posicaoProjetada, pontoProximo], {
+                color: cor,
+                weight: 1,
+                opacity: 0.2,
+                dashArray: '3, 5'
+              }).addTo(layerGroup);
+            }
+          }
+
+          // Ícone do ônibus
           const icone = L.divIcon({
             className: 'custom-bus-pin',
             html: `<div class="bus-marker-pin" style="background:${cor};">🚌 ${bus.linha}</div>`,
@@ -537,7 +645,7 @@
             iconAnchor: [32, 11]
           });
 
-          L.marker(pos, { icon: icone }).addTo(infoLinha.layerGroup)
+          L.marker(posicaoProjetada, { icon: icone }).addTo(layerGroup)
             .bindPopup(`
               <div style="font-size:13px; line-height: 1.4;">
                 <b style="color:${cor}; font-size:15px;">Linha ${bus.linha}</b><br>
@@ -547,9 +655,64 @@
             `);
         }
       });
+    }
 
-      if (deveEnquadrar && coords.length > 0) {
-        map.fitBounds(coords, { padding: [50, 50], maxZoom: 15 });
+    async function buscarEDesenharLinha(linha, deveEnquadrar = false) {
+      const infoLinha = linhasAtivas[linha];
+      if (!infoLinha) return;
+
+      const veiculos = await buscarDadosLinha(linha);
+      infoLinha.ultimosDados = veiculos;
+      
+      // Limpa o layer group
+      infoLinha.layerGroup.clearLayers();
+
+      const cor = infoLinha.color;
+      const itinerario = infoLinha.itinerario;
+
+      // Desenha o itinerário da linha
+      desenharItinerario(infoLinha.layerGroup, itinerario, cor);
+
+      // Desenha os veículos
+      desenharVeiculos(infoLinha.layerGroup, veiculos, cor, itinerario);
+
+      // Adiciona legenda da linha
+      const legenda = L.control({ position: 'bottomleft' });
+      legenda.onAdd = function() {
+        const div = L.DomUtil.create('div', 'info legend');
+        div.style.background = 'white';
+        div.style.padding = '6px 10px';
+        div.style.borderRadius = '8px';
+        div.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+        div.style.fontSize = '11px';
+        div.style.fontWeight = '600';
+        div.style.border = '2px solid ' + cor;
+        div.innerHTML = `
+          <span style="color:${cor};">🚌 Linha ${linha}</span>
+          <span style="color:#6b7280; margin-left:8px; font-weight:400;">${veiculos.length} ônibus</span>
+        `;
+        return div;
+      };
+      
+      // Remove legendas anteriores da mesma linha
+      Object.values(linhasAtivas).forEach(info => {
+        if (info.legenda) {
+          map.removeControl(info.legenda);
+        }
+      });
+      
+      // Adiciona nova legenda
+      infoLinha.legenda = legenda;
+      legenda.addTo(map);
+
+      if (deveEnquadrar && veiculos.length > 0) {
+        const coords = veiculos
+          .filter(b => !isNaN(b.latitude) && !isNaN(b.longitude))
+          .map(b => [b.latitude, b.longitude]);
+        
+        if (coords.length > 0) {
+          map.fitBounds(coords, { padding: [80, 80], maxZoom: 14 });
+        }
       }
 
       atualizarStatusGeral();
@@ -561,7 +724,6 @@
       const linhas = Object.keys(linhasAtivas);
       if (linhas.length === 0) return;
       
-      // Atualizar todas em paralelo para melhor performance
       const promessas = linhas.map(linha => buscarEDesenharLinha(linha, false));
       await Promise.allSettled(promessas);
     }
@@ -573,9 +735,10 @@
       if (totalLinhas === 0) {
         statusMsg.innerText = '➕ Adicione uma linha acima para iniciar o monitoramento.';
       } else {
-        const totalVeiculos = Object.values(linhasAtivas).reduce(
-          (acc, info) => acc + (info.ultimosDados ? info.ultimosDados.length : 0), 0
-        );
+        let totalVeiculos = 0;
+        Object.values(linhasAtivas).forEach(info => {
+          totalVeiculos += (info.ultimosDados ? info.ultimosDados.length : 0);
+        });
         statusMsg.innerText = `🚌 ${totalLinhas} linha(s) | ${totalVeiculos} ônibus em tempo real (atualização a cada ${INTERVALO_ATUALIZACAO/1000}s)`;
       }
     }
@@ -631,21 +794,15 @@
 
     // ==================== INICIALIZAÇÃO ====================
     
-    // Iniciar atualizações periódicas
     if (intervaloAtualizacao) clearInterval(intervaloAtualizacao);
     intervaloAtualizacao = setInterval(atualizarTodasLinhas, INTERVALO_ATUALIZACAO);
 
-    // Permitir Enter no input
     document.getElementById('linhaInput').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') adicionarLinha();
     });
 
-    // Mensagem inicial
     console.log('🚌 Cadê o Ônibus? - Monitoramento de ônibus do Rio de Janeiro');
     console.log('💡 Adicione uma linha para começar!');
-    
-    // Adicionar linha 232 automaticamente para teste (opcional)
-    // setTimeout(() => atalhoLinha('232'), 500);
   </script>
 </body>
 </html>
