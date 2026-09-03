@@ -1,0 +1,150 @@
+ <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Cadê o Ônibus?</title>
+
+  <!-- Configurações PWA para iOS (Tela Cheia) -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Ônibus Rio">
+
+  <!-- Estilos do Leaflet (Mapa) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    #map { width: 100vw; height: 100vh; z-index: 1; }
+    
+    /* Barra de busca flutuante */
+    .search-panel {
+      position: absolute;
+      top: 50px;
+      left: 15px;
+      right: 15px;
+      z-index: 1000;
+      display: flex;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.92);
+      padding: 10px;
+      border-radius: 14px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      backdrop-filter: blur(10px);
+    }
+
+    input {
+      flex: 1;
+      padding: 12px 14px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 16px; /* Evita zoom automático no iOS */
+      outline: none;
+    }
+
+    button {
+      padding: 12px 18px;
+      background: #007aff;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .status-badge {
+      position: absolute;
+      bottom: 25px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.75);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="search-panel">
+    <input id="linhaInput" type="text" placeholder="Ex: 232, 606, 693..." />
+    <button onclick="buscarOnibus()">Buscar</button>
+  </div>
+
+  <div id="status" class="status-badge">Digite uma linha para rastrear</div>
+  <div id="map"></div>
+
+  <!-- Biblioteca do Mapa -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // Inicia o mapa centralizado no Rio de Janeiro
+    const map = L.map('map', { zoomControl: false }).setView([-22.9068, -43.1729], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(map);
+
+    let markers = [];
+    let intervalId = null;
+
+    async function atualizarDados(linha) {
+      const status = document.getElementById('status');
+      status.innerText = "Atualizando posições...";
+
+      try {
+        // Consome a API pública da SMTR / Mobilidade.Rio
+        const response = await fetch(`https://dados.mobilidade.rio/gps/sppo?linha=${encodeURIComponent(linha)}`);
+        const dados = await response.json();
+
+        // Remove marcadores anteriores
+        markers.forEach(m => map.removeLayer(m));
+        markers = [];
+
+        if (!dados || dados.length === 0) {
+          status.innerText = `Nenhum ônibus ativo encontrado para a linha ${linha}`;
+          return;
+        }
+
+        const coords = [];
+
+        dados.forEach(bus => {
+          // Validação básica de latitude/longitude
+          if (bus.latitude && bus.longitude) {
+            const lat = parseFloat(bus.latitude);
+            const lng = parseFloat(bus.longitude);
+            coords.push([lat, lng]);
+
+            const marker = L.marker([lat, lng]).addTo(map)
+              .bindPopup(`<b>Linha:</b> ${bus.linha}<br><b>Ordem:</b> ${bus.ordem}<br><b>Velocidade:</b> ${bus.velocidade} km/h`);
+            markers.push(marker);
+          }
+        });
+
+        if (coords.length > 0) {
+          // Ajusta a câmera do mapa para enquadrar todos os ônibus encontrados
+          map.fitBounds(coords, { padding: [50, 50] });
+          status.innerText = `${markers.length} ônibus da linha ${linha} encontrados`;
+        }
+      } catch (err) {
+        status.innerText = "Erro ao carregar dados do GPS";
+        console.error(err);
+      }
+    }
+
+    function buscarOnibus() {
+      const linha = document.getElementById('linhaInput').value.trim();
+      if (!linha) return;
+
+      if (intervalId) clearInterval(intervalId);
+
+      atualizarDados(linha);
+      // Atualiza automaticamente a cada 15 segundos
+      intervalId = setInterval(() => atualizarDados(linha), 15000);
+    }
+  </script>
+</body>
+</html>
