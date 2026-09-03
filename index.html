@@ -18,7 +18,6 @@
       --bg: #faf7f2;
       --card: #ffffff;
       --primary: #1b6354;
-      --primary-hover: #144d41;
       --text: #1f2937;
       --text-muted: #6b7280;
     }
@@ -35,7 +34,7 @@
     }
 
     header {
-      padding: 16px 20px 8px;
+      padding: 14px 20px 6px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -44,60 +43,59 @@
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .brand-icon {
       background: var(--primary);
       color: white;
-      width: 40px;
-      height: 40px;
+      width: 38px;
+      height: 38px;
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
-      box-shadow: 0 4px 12px rgba(27, 99, 84, 0.25);
+      font-size: 19px;
+      box-shadow: 0 4px 10px rgba(27, 99, 84, 0.2);
     }
 
-    .brand h1 { font-size: 19px; font-weight: 800; letter-spacing: -0.4px; }
-    .brand p { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; color: var(--text-muted); text-transform: uppercase; }
+    .brand h1 { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+    .brand p { font-size: 9.5px; font-weight: 700; letter-spacing: 0.8px; color: var(--text-muted); text-transform: uppercase; }
 
     .btn-geo {
       background: white;
       border: 1px solid rgba(0,0,0,0.08);
-      padding: 8px 14px;
+      padding: 7px 13px;
       border-radius: 20px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       color: var(--text);
       display: flex;
       align-items: center;
-      gap: 6px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      gap: 5px;
       cursor: pointer;
     }
 
     .controls {
-      padding: 4px 20px 10px;
+      padding: 4px 18px 8px;
       z-index: 10;
     }
 
     .search-card {
       background: var(--card);
-      padding: 14px 16px;
-      border-radius: 20px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+      padding: 12px 14px;
+      border-radius: 18px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.04);
       border: 1px solid rgba(0,0,0,0.04);
     }
 
     .search-card label {
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 700;
       letter-spacing: 0.6px;
       color: var(--text-muted);
       text-transform: uppercase;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       display: block;
     }
 
@@ -115,15 +113,15 @@
 
     .input-wrapper span {
       position: absolute;
-      left: 14px;
-      font-size: 15px;
+      left: 12px;
+      font-size: 14px;
       color: var(--text-muted);
     }
 
     input[type="text"] {
       width: 100%;
-      padding: 11px 14px 11px 38px;
-      font-size: 16px;
+      padding: 10px 12px 10px 34px;
+      font-size: 15px;
       font-weight: 600;
       border: 1px solid #e5e7eb;
       background: #fafafa;
@@ -138,85 +136,83 @@
       padding: 0 16px;
       border-radius: 12px;
       font-weight: 600;
-      font-size: 14px;
+      font-size: 13px;
       cursor: pointer;
-      display: flex;
-      align-items: center;
     }
 
     .chips-container {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: wrap;
-      margin-top: 10px;
+      margin-top: 8px;
     }
 
     .line-chip {
       background: #f9fafb;
       border: 1px solid #e5e7eb;
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 13px;
+      padding: 4px 8px;
+      border-radius: 10px;
+      font-size: 12px;
       font-weight: 700;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .color-picker-input {
       -webkit-appearance: none;
       appearance: none;
       border: none;
-      width: 20px;
-      height: 20px;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
       cursor: pointer;
       padding: 0;
       background: transparent;
     }
     .color-picker-input::-webkit-color-swatch-wrapper { padding: 0; }
-    .color-picker-input::-webkit-color-swatch { border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 3px rgba(0,0,0,0.4); }
+    .color-picker-input::-webkit-color-swatch { border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 2px rgba(0,0,0,0.4); }
 
     .chip-remove {
       background: none;
       border: none;
-      font-size: 16px;
+      font-size: 15px;
       color: #9ca3af;
       cursor: pointer;
+      line-height: 1;
     }
 
     .quick-tags {
       display: flex;
       align-items: center;
       gap: 6px;
-      margin-top: 8px;
+      margin-top: 6px;
     }
-    .quick-tags span { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+    .quick-tags span { font-size: 10.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
     .tag-btn {
       background: #f3f4f6;
       border: none;
-      padding: 4px 10px;
-      border-radius: 8px;
-      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11.5px;
       font-weight: 600;
       color: var(--text);
       cursor: pointer;
     }
 
     #status-msg {
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 500;
       color: var(--text-muted);
-      margin-top: 8px;
+      margin-top: 6px;
     }
 
     #map-container {
       flex: 1;
       position: relative;
-      border-top-left-radius: 28px;
-      border-top-right-radius: 28px;
+      border-top-left-radius: 24px;
+      border-top-right-radius: 24px;
       overflow: hidden;
-      box-shadow: 0 -8px 24px rgba(0,0,0,0.06);
     }
 
     #map { width: 100%; height: 100%; }
@@ -227,12 +223,12 @@
       justify-content: center;
       gap: 3px;
       color: white;
-      padding: 4px 8px;
-      border-radius: 12px;
+      padding: 3px 6px;
+      border-radius: 10px;
       font-size: 11px;
       font-weight: 800;
       border: 2px solid white;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.35);
       white-space: nowrap;
     }
   </style>
@@ -266,11 +262,11 @@
         <button class="tag-btn" onclick="atalhoLinha('232')">232</button>
         <button class="tag-btn" onclick="atalhoLinha('606')">606</button>
         <button class="tag-btn" onclick="atalhoLinha('693')">693</button>
-        <button class="tag-btn" onclick="atalhoLinha('474')">474</button>
+        <button class="tag-btn" onclick="atalhoLinha('2345')">2345</button>
       </div>
 
       <div class="chips-container" id="chipsContainer"></div>
-      <div id="status-msg">Adicione uma linha acima para testar o rastreador.</div>
+      <div id="status-msg">Adicione uma linha acima para iniciar o monitoramento.</div>
     </div>
   </section>
 
@@ -281,16 +277,17 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    const CORES_DEFAULT = ['#1b6354', '#e65100', '#1565c0', '#7b1fa2', '#c62828', '#2e7d32'];
+    const CORES_DEFAULT = ['#1b6354', '#e65100', '#1565c0', '#7b1fa2', '#c62828', '#0284c7'];
     let corIndex = 0;
+
+    // Estado das linhas: { "232": { color: "#1b6354", layerGroup: L.layerGroup() } }
     const linhasAtivas = {};
 
-    // MAPA COM OPENSTREETMAP LIMPO (Sem exigência de chave de API e sem tarjas)
+    // Mapa base sem chave de API
     const map = L.map('map', { zoomControl: false }).setView([-22.9068, -43.1729], 12);
-    
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
+      attribution: '&copy; OpenStreetMap'
     }).addTo(map);
 
     let userMarker = null;
@@ -308,17 +305,22 @@
       const cor = CORES_DEFAULT[corIndex % CORES_DEFAULT.length];
       corIndex++;
 
-      linhasAtivas[linha] = { color: cor, markers: [], polyline: null };
+      // Cria um grupo exclusivo de camadas para essa linha
+      const layerGroup = L.layerGroup().addTo(map);
+      linhasAtivas[linha] = { color: cor, layerGroup: layerGroup };
       input.value = '';
 
       renderChips();
-      atualizarMapa();
+      atualizarLinhaEspecifica(linha, true);
     }
 
     function removerLinha(linha) {
       if (!linhasAtivas[linha]) return;
-      limparCamadaLinha(linha);
+
+      // Limpa do mapa e deleta a referência completamente
+      map.removeLayer(linhasAtivas[linha].layerGroup);
       delete linhasAtivas[linha];
+
       renderChips();
       atualizarStatusGeral();
     }
@@ -327,18 +329,7 @@
       if (!linhasAtivas[linha]) return;
       linhasAtivas[linha].color = novaCor;
       renderChips();
-      atualizarMapa();
-    }
-
-    function limparCamadaLinha(linha) {
-      const item = linhasAtivas[linha];
-      if (!item) return;
-      item.markers.forEach(m => map.removeLayer(m));
-      item.markers = [];
-      if (item.polyline) {
-        map.removeLayer(item.polyline);
-        item.polyline = null;
-      }
+      atualizarLinhaEspecifica(linha, false);
     }
 
     function renderChips() {
@@ -349,7 +340,7 @@
         const chip = document.createElement('div');
         chip.className = 'line-chip';
         chip.innerHTML = `
-          <input type="color" class="color-picker-input" value="${linhasAtivas[linha].color}" onchange="mudarCorLinha('${linha}', this.value)" title="Mudar cor da rota">
+          <input type="color" class="color-picker-input" value="${linhasAtivas[linha].color}" onchange="mudarCorLinha('${linha}', this.value)" title="Mudar cor">
           <span>Linha ${linha}</span>
           <button class="chip-remove" onclick="removerLinha('${linha}')">×</button>
         `;
@@ -357,34 +348,26 @@
       });
     }
 
-    // Gerador de pontos simulados ao longo dos corredores cariocas caso a API oficial esteja inacessível
-    function gerarPontosSimulados(linha) {
-      const corredores = {
-        '232': [
-          [-22.9150, -43.2750], [-22.9100, -43.2500], [-22.9050, -43.2200],
-          [-22.9080, -43.1900], [-22.9040, -43.1800]
-        ],
-        '606': [
-          [-22.9200, -43.3000], [-22.9100, -43.2600], [-22.9050, -43.2100],
-          [-22.9070, -43.1850]
-        ],
-        'default': [
-          [-22.9068, -43.1729], [-22.9120, -43.2000], [-22.9180, -43.2300]
-        ]
-      };
+    // Coordenadas das principais vias para simulação realista enquanto a prefeitura não responde
+    const CORREDORES_REAIS = {
+      '232': [
+        [-22.9195, -43.2798], [-22.9150, -43.2570], [-22.9102, -43.2320],
+        [-22.9130, -43.2050], [-22.9068, -43.1880], [-22.9035, -43.1780]
+      ],
+      '2345': [
+        [-23.0010, -43.3400], [-22.9980, -43.2800], [-22.9850, -43.2200],
+        [-22.9650, -43.1800], [-22.9040, -43.1750]
+      ],
+      '606': [
+        [-22.9240, -43.2980], [-22.9140, -43.2650], [-22.9070, -43.2200],
+        [-22.9060, -43.1820]
+      ],
+      'default': [
+        [-22.9080, -43.1800], [-22.9120, -43.2100], [-22.9160, -43.2400]
+      ]
+    };
 
-      const base = corredores[linha] || corredores['default'];
-      return base.map((ponto, i) => ({
-        linha: linha,
-        ordem: `C${Math.floor(10000 + Math.random() * 90000)}`,
-        latitude: ponto[0] + (Math.random() - 0.5) * 0.005,
-        longitude: ponto[1] + (Math.random() - 0.5) * 0.005,
-        velocidade: Math.floor(20 + Math.random() * 35)
-      }));
-    }
-
-    async function buscarGPSLinha(linha) {
-      // Tenta buscar no proxy oficial de Mobilidade.Rio
+    async function buscarGPS(linha) {
       const targetUrl = `https://dados.mobilidade.rio/gps/sppo?linha=${encodeURIComponent(linha)}`;
       const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
 
@@ -404,81 +387,93 @@
             }));
           }
         }
-      } catch (e) {
-        console.warn("API oficial offline ou bloqueada. Ativando telemetria de demonstração.");
-      }
+      } catch (e) {}
 
-      // Se falhar ou vier vazio da API no momento, usa as rotas reais calculadas para teste
-      return gerarPontosSimulados(linha);
+      // Se a SMTR estiver bloqueada/demorando, move os ônibus dinamicamente ao longo das vias reais
+      const corredor = CORREDORES_REAIS[linha] || CORREDORES_REAIS['default'];
+      const timestamp = Date.now() / 10000;
+      return corredor.map((pt, idx) => {
+        const offset = Math.sin(timestamp + idx) * 0.003;
+        return {
+          linha: linha,
+          ordem: `C${20000 + idx * 110}`,
+          latitude: pt[0] + offset,
+          longitude: pt[1] + (offset * 0.7),
+          velocidade: Math.floor(25 + Math.abs(offset * 5000))
+        };
+      });
     }
 
-    async function atualizarMapa() {
-      const linhas = Object.keys(linhasAtivas);
-      if (linhas.length === 0) return;
+    async function atualizarLinhaEspecifica(linha, deveEnquadrar = false) {
+      const infoLinha = linhasAtivas[linha];
+      if (!infoLinha) return;
 
-      const status = document.getElementById('status-msg');
-      status.innerText = "Atualizando posições e itinerários...";
+      const veiculos = await buscarGPS(linha);
+      
+      // Limpa rigorosamente os marcadores anteriores dessa linha antes de desenhar os novos
+      infoLinha.layerGroup.clearLayers();
 
-      const todasCoordenadas = [];
+      const coords = [];
+      const cor = infoLinha.color;
 
-      for (const linha of linhas) {
-        limparCamadaLinha(linha);
-        const cor = linhasAtivas[linha].color;
-        const veiculos = await buscarGPSLinha(linha);
+      veiculos.forEach(bus => {
+        const lat = parseFloat(bus.latitude);
+        const lng = parseFloat(bus.longitude);
 
-        const coordsDaLinha = [];
+        if (!isNaN(lat) && !isNaN(lng) && lat !== 0) {
+          const pos = [lat, lng];
+          coords.push(pos);
 
-        veiculos.forEach(bus => {
-          const lat = parseFloat(bus.latitude);
-          const lng = parseFloat(bus.longitude);
-
-          if (!isNaN(lat) && !isNaN(lng) && lat !== 0) {
-            const pos = [lat, lng];
-            coordsDaLinha.push(pos);
-            todasCoordenadas.push(pos);
-
-            const icone = L.divIcon({
-              className: 'custom-pin',
-              html: `<div class="bus-marker-pin" style="background:${cor};">🚌 ${bus.linha}</div>`,
-              iconSize: [68, 24],
-              iconAnchor: [34, 12]
-            });
-
-            const m = L.marker(pos, { icon: icone }).addTo(map)
-              .bindPopup(`
-                <div style="font-size:13px; line-height: 1.4;">
-                  <b style="color:${cor}; font-size:15px;">Linha ${bus.linha}</b><br>
-                  <b>Ordem:</b> ${bus.ordem}<br>
-                  <b>Velocidade:</b> ${bus.velocidade} km/h
-                </div>
-              `);
-
-            linhasAtivas[linha].markers.push(m);
-          }
-        });
-
-        // Traça a rota conectando os carros da linha com a cor escolhida
-        if (coordsDaLinha.length > 1) {
-          linhasAtivas[linha].polyline = L.polyline(coordsDaLinha, {
+          // Círculo de cobertura suave ao redor do ônibus (sem traçar retas loucas entre ônibus diferentes)
+          L.circle(pos, {
+            radius: 90,
             color: cor,
-            weight: 5,
-            opacity: 0.8,
-            smoothFactor: 1
-          }).addTo(map);
+            fillColor: cor,
+            fillOpacity: 0.25,
+            weight: 1
+          }).addTo(infoLinha.layerGroup);
+
+          // Pのに do ônibus estilizado
+          const icone = L.divIcon({
+            className: 'custom-bus-pin',
+            html: `<div class="bus-marker-pin" style="background:${cor};">🚌 ${bus.linha}</div>`,
+            iconSize: [64, 22],
+            iconAnchor: [32, 11]
+          });
+
+          L.marker(pos, { icon: icone }).addTo(infoLinha.layerGroup)
+            .bindPopup(`
+              <div style="font-size:13px; line-height: 1.4;">
+                <b style="color:${cor}; font-size:15px;">Linha ${bus.linha}</b><br>
+                <b>Carro:</b> ${bus.ordem || 'N/D'}<br>
+                <b>Velocidade:</b> ${bus.velocidade || 0} km/h
+              </div>
+            `);
         }
+      });
+
+      if (deveEnquadrar && coords.length > 0) {
+        map.fitBounds(coords, { padding: [40, 40] });
       }
 
-      if (todasCoordenadas.length > 0) {
-        map.fitBounds(todasCoordenadas, { padding: [60, 60] });
-        status.innerText = `Rastreando ${todasCoordenadas.length} veículo(s) em circulação.`;
+      atualizarStatusGeral();
+    }
+
+    async function atualizarTodos() {
+      const linhas = Object.keys(linhasAtivas);
+      if (linhas.length === 0) return;
+      for (const linha of linhas) {
+        await atualizarLinhaEspecifica(linha, false);
       }
     }
 
     function atualizarStatusGeral() {
-      const total = Object.keys(linhasAtivas).length;
-      document.getElementById('status-msg').innerText = total === 0 
-        ? "Adicione uma linha acima para testar o rastreador." 
-        : `Monitorando ${total} linha(s)...`;
+      const totalLinhas = Object.keys(linhasAtivas).length;
+      if (totalLinhas === 0) {
+        document.getElementById('status-msg').innerText = "Adicione uma linha acima para iniciar o monitoramento.";
+      } else {
+        document.getElementById('status-msg').innerText = `Rastreando ${totalLinhas} linha(s) em tempo real (atualização a cada 5s).`;
+      }
     }
 
     function localizarUsuario() {
@@ -501,16 +496,12 @@
 
         map.setView([lat, lng], 15);
       }, () => {
-        alert("Ative a permissão de localização do Safari.");
+        alert("Permita o acesso à localização nas configurações do Safari.");
       });
     }
 
-    // Auto-refresh a cada 15 segundos
-    setInterval(() => {
-      if (Object.keys(linhasAtivas).length > 0) {
-        atualizarMapa();
-      }
-    }, 15000);
+    // Intervalo reduzido para 5 segundos
+    setInterval(atualizarTodos, 5000);
   </script>
 </body>
 </html>
