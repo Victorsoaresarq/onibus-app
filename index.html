@@ -1,149 +1,247 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Cadê o Ônibus?</title>
 
-  <!-- Configurações PWA para iOS (Tela Cheia) -->
+  <!-- PWA iOS -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Ônibus Rio">
 
-  <!-- Estilos do Leaflet (Mapa) -->
+  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f2f2f7; }
     #map { width: 100vw; height: 100vh; z-index: 1; }
-    
-    /* Barra de busca flutuante */
-    .search-panel {
+
+    /* Barra Superior */
+    .top-bar {
       position: absolute;
-      top: 50px;
-      left: 15px;
-      right: 15px;
+      top: 48px;
+      left: 16px;
+      right: 16px;
       z-index: 1000;
       display: flex;
-      gap: 8px;
-      background: rgba(255, 255, 255, 0.92);
-      padding: 10px;
-      border-radius: 14px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-      backdrop-filter: blur(10px);
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.88);
+      padding: 8px 12px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
     }
 
     input {
       flex: 1;
-      padding: 12px 14px;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      font-size: 16px; /* Evita zoom automático no iOS */
+      padding: 10px 14px;
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 12px;
+      font-size: 16px;
+      background: #fff;
       outline: none;
     }
 
-    button {
-      padding: 12px 18px;
+    button.btn-search {
+      padding: 10px 18px;
       background: #007aff;
-      color: white;
+      color: #fff;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       font-weight: 600;
       font-size: 15px;
+      cursor: pointer;
     }
 
+    /* Botão de Localização do Usuário */
+    .btn-geo {
+      position: absolute;
+      bottom: 80px;
+      right: 18px;
+      z-index: 1000;
+      background: #ffffff;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: none;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    /* Badge de status inferior */
     .status-badge {
       position: absolute;
-      bottom: 25px;
+      bottom: 24px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 1000;
-      background: rgba(0, 0, 0, 0.75);
-      color: white;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 12px;
+      background: rgba(28, 28, 30, 0.85);
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 24px;
+      font-size: 13px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       pointer-events: none;
+      white-space: nowrap;
+    }
+
+    /* Ícone visual do ônibus */
+    .bus-pin {
+      background: #007aff;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: bold;
+      border: 2px solid white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      text-align: center;
+      white-space: nowrap;
     }
   </style>
 </head>
 <body>
 
-  <div class="search-panel">
-    <input id="linhaInput" type="text" placeholder="Ex: 232, 606, 693..." />
-    <button onclick="buscarOnibus()">Buscar</button>
+  <div class="top-bar">
+    <input id="linhaInput" type="text" placeholder="Buscar linha (ex: 232, 606, 693)" />
+    <button class="btn-search" onclick="buscarOnibus()">Buscar</button>
   </div>
 
+  <button class="btn-geo" onclick="localizarUsuario()" title="Minha Localização">📍</button>
   <div id="status" class="status-badge">Digite uma linha para rastrear</div>
   <div id="map"></div>
 
-  <!-- Biblioteca do Mapa -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // Inicia o mapa centralizado no Rio de Janeiro
+    // Inicializa o mapa com estilo Voyager (Clean / Moderno)
     const map = L.map('map', { zoomControl: false }).setView([-22.9068, -43.1729], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19
+    
+    // Tiles da CartoDB - Voyager (visual limpo e profissional)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      attribution: '&copy; CARTO'
     }).addTo(map);
 
     let markers = [];
     let intervalId = null;
+    let userMarker = null;
 
-    async function atualizarDados(linha) {
+    // Localizar a posição do próprio usuário no mapa
+    function localizarUsuario() {
+      if (!navigator.geolocation) {
+        alert("Geolocalização não suportada.");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(pos => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+
+        if (userMarker) map.removeLayer(userMarker);
+        
+        userMarker = L.circleMarker([lat, lng], {
+          radius: 8,
+          fillColor: "#34c759",
+          color: "#fff",
+          weight: 3,
+          opacity: 1,
+          fillOpacity: 0.9
+        }).addTo(map).bindPopup("Você está aqui").openPopup();
+
+        map.setView([lat, lng], 14);
+      }, () => {
+        alert("Não foi possível obter sua localização. Verifique as permissões do Safari.");
+      });
+    }
+
+    async function carregarGPS(linha) {
       const status = document.getElementById('status');
-      status.innerText = "Atualizando posições...";
+      status.innerText = "Consultando satélites da prefeitura...";
+
+      // Usa proxy CORS para garantir que a requisição passe sem ser bloqueada pelo navegador
+      const apiUrl = `https://dados.mobilidade.rio/gps/sppo`;
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`;
 
       try {
-        // Consome a API pública da SMTR / Mobilidade.Rio
-        const response = await fetch(`https://dados.mobilidade.rio/gps/sppo?linha=${encodeURIComponent(linha)}`);
+        const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error("Erro na rede");
         const dados = await response.json();
 
-        // Remove marcadores anteriores
+        // Limpa marcadores anteriores
         markers.forEach(m => map.removeLayer(m));
         markers = [];
 
-        if (!dados || dados.length === 0) {
-          status.innerText = `Nenhum ônibus ativo encontrado para a linha ${linha}`;
+        // Filtra a linha informada (ex: linha 232 pode aparecer como 0232 ou 232)
+        const buscaLimpa = linha.replace(/\D/g, '');
+        const onibusEncontrados = dados.filter(item => {
+          if (!item.linha) return false;
+          const linhaItem = item.linha.toString().replace(/\D/g, '');
+          return linhaItem === buscaLimpa || item.linha.toString().toLowerCase().includes(linha.toLowerCase());
+        });
+
+        if (onibusEncontrados.length === 0) {
+          status.innerText = `Nenhum sinal ativo para a linha ${linha}`;
           return;
         }
 
         const coords = [];
 
-        dados.forEach(bus => {
-          // Validação básica de latitude/longitude
-          if (bus.latitude && bus.longitude) {
-            const lat = parseFloat(bus.latitude);
-            const lng = parseFloat(bus.longitude);
+        onibusEncontrados.forEach(bus => {
+          const lat = parseFloat(bus.latitude?.toString().replace(',', '.'));
+          const lng = parseFloat(bus.longitude?.toString().replace(',', '.'));
+
+          if (!isNaN(lat) && !isNaN(lng) && lat !== 0) {
             coords.push([lat, lng]);
 
-            const marker = L.marker([lat, lng]).addTo(map)
-              .bindPopup(`<b>Linha:</b> ${bus.linha}<br><b>Ordem:</b> ${bus.ordem}<br><b>Velocidade:</b> ${bus.velocidade} km/h`);
+            // Ícone estilizado com a linha
+            const icone = L.divIcon({
+              className: 'custom-bus',
+              html: `<div class="bus-pin">🚌 ${bus.linha}</div>`,
+              iconSize: [60, 24],
+              iconAnchor: [30, 12]
+            });
+
+            const marker = L.marker([lat, lng], { icon: icone }).addTo(map)
+              .bindPopup(`
+                <div style="font-size: 13px;">
+                  <b>Linha:</b> ${bus.linha}<br>
+                  <b>Ordem:</b> ${bus.ordem || 'N/A'}<br>
+                  <b>Velocidade:</b> ${bus.velocidade || 0} km/h
+                </div>
+              `);
             markers.push(marker);
           }
         });
 
         if (coords.length > 0) {
-          // Ajusta a câmera do mapa para enquadrar todos os ônibus encontrados
-          map.fitBounds(coords, { padding: [50, 50] });
-          status.innerText = `${markers.length} ônibus da linha ${linha} encontrados`;
+          map.fitBounds(coords, { padding: [60, 60] });
+          status.innerText = `${markers.length} ônibus encontrados na linha ${linha}`;
+        } else {
+          status.innerText = `Coordenadas inválidas para a linha ${linha}`;
         }
       } catch (err) {
-        status.innerText = "Erro ao carregar dados do GPS";
         console.error(err);
+        status.innerText = "Falha ao conectar com o serviço de GPS da SMTR";
       }
     }
 
     function buscarOnibus() {
-      const linha = document.getElementById('linhaInput').value.trim();
-      if (!linha) return;
+      const input = document.getElementById('linhaInput').value.trim();
+      if (!input) return;
 
       if (intervalId) clearInterval(intervalId);
 
-      atualizarDados(linha);
-      // Atualiza automaticamente a cada 15 segundos
-      intervalId = setInterval(() => atualizarDados(linha), 15000);
+      carregarGPS(input);
+      // Auto-refresh a cada 15 segundos
+      intervalId = setInterval(() => carregarGPS(input), 15000);
     }
   </script>
 </body>
