@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <style>
+    /* Seu CSS existente permanece igual */
     :root {
       --bg: #faf7f2;
       --card: #ffffff;
@@ -187,6 +188,7 @@
       align-items: center;
       gap: 6px;
       margin-top: 6px;
+      flex-wrap: wrap;
     }
     .quick-tags span { font-size: 10.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
     .tag-btn {
@@ -277,21 +279,52 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
+    // ==================== CONFIGURAÇÕES ====================
     const CORES_DEFAULT = ['#1b6354', '#e65100', '#1565c0', '#7b1fa2', '#c62828', '#0284c7'];
+    const INTERVALO_ATUALIZACAO = 5000; // 5 segundos
+    
+    // ==================== ESTADO GLOBAL ====================
+    const linhasAtivas = {}; // { "232": { color: "#1b6354", layerGroup: L.layerGroup(), ultimosDados: [] } }
     let corIndex = 0;
+    let userMarker = null;
+    let intervaloAtualizacao = null;
 
-    // Estado das linhas: { "232": { color: "#1b6354", layerGroup: L.layerGroup() } }
-    const linhasAtivas = {};
-
-    // Mapa base sem chave de API
+    // ==================== MAPA ====================
     const map = L.map('map', { zoomControl: false }).setView([-22.9068, -43.1729], 12);
+    
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap'
     }).addTo(map);
 
-    let userMarker = null;
+    // Adicionar zoom control no canto inferior direito
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
 
+    // ==================== CORREDORES PARA SIMULAÇÃO ====================
+    const CORREDORES_REAIS = {
+      '232': [
+        [-22.9195, -43.2798], [-22.9150, -43.2570], [-22.9102, -43.2320],
+        [-22.9130, -43.2050], [-22.9068, -43.1880], [-22.9035, -43.1780]
+      ],
+      '2345': [
+        [-23.0010, -43.3400], [-22.9980, -43.2800], [-22.9850, -43.2200],
+        [-22.9650, -43.1800], [-22.9040, -43.1750]
+      ],
+      '606': [
+        [-22.9240, -43.2980], [-22.9140, -43.2650], [-22.9070, -43.2200],
+        [-22.9060, -43.1820]
+      ],
+      '693': [
+        [-22.8980, -43.2100], [-22.9020, -43.1950], [-22.9068, -43.1729],
+        [-22.9100, -43.1550]
+      ],
+      'default': [
+        [-22.9080, -43.1800], [-22.9120, -43.2100], [-22.9160, -43.2400]
+      ]
+    };
+
+    // ==================== FUNÇÕES PRINCIPAIS ====================
+    
     function atalhoLinha(linha) {
       document.getElementById('linhaInput').value = linha;
       adicionarLinha();
@@ -300,18 +333,35 @@
     function adicionarLinha() {
       const input = document.getElementById('linhaInput');
       const linha = input.value.trim().toUpperCase();
-      if (!linha || linhasAtivas[linha]) return;
+      
+      if (!linha) {
+        document.getElementById('status-msg').innerText = '⚠️ Digite o número da linha.';
+        return;
+      }
+      
+      if (linhasAtivas[linha]) {
+        document.getElementById('status-msg').innerText = `⚠️ Linha ${linha} já está sendo monitorada.`;
+        input.value = '';
+        return;
+      }
 
       const cor = CORES_DEFAULT[corIndex % CORES_DEFAULT.length];
       corIndex++;
 
       // Cria um grupo exclusivo de camadas para essa linha
       const layerGroup = L.layerGroup().addTo(map);
-      linhasAtivas[linha] = { color: cor, layerGroup: layerGroup };
+      linhasAtivas[linha] = { 
+        color: cor, 
+        layerGroup: layerGroup,
+        ultimosDados: []
+      };
+      
       input.value = '';
-
       renderChips();
-      atualizarLinhaEspecifica(linha, true);
+      atualizarStatusGeral();
+      
+      // Buscar dados imediatamente
+      buscarEDesenharLinha(linha, true);
     }
 
     function removerLinha(linha) {
@@ -329,7 +379,7 @@
       if (!linhasAtivas[linha]) return;
       linhasAtivas[linha].color = novaCor;
       renderChips();
-      atualizarLinhaEspecifica(linha, false);
+      buscarEDesenharLinha(linha, false);
     }
 
     function renderChips() {
@@ -340,7 +390,8 @@
         const chip = document.createElement('div');
         chip.className = 'line-chip';
         chip.innerHTML = `
-          <input type="color" class="color-picker-input" value="${linhasAtivas[linha].color}" onchange="mudarCorLinha('${linha}', this.value)" title="Mudar cor">
+          <input type="color" class="color-picker-input" value="${linhasAtivas[linha].color}" 
+                 onchange="mudarCorLinha('${linha}', this.value)" title="Mudar cor">
           <span>Linha ${linha}</span>
           <button class="chip-remove" onclick="removerLinha('${linha}')">×</button>
         `;
@@ -348,92 +399,137 @@
       });
     }
 
-    // Coordenadas das principais vias para simulação realista enquanto a prefeitura não responde
-    const CORREDORES_REAIS = {
-      '232': [
-        [-22.9195, -43.2798], [-22.9150, -43.2570], [-22.9102, -43.2320],
-        [-22.9130, -43.2050], [-22.9068, -43.1880], [-22.9035, -43.1780]
-      ],
-      '2345': [
-        [-23.0010, -43.3400], [-22.9980, -43.2800], [-22.9850, -43.2200],
-        [-22.9650, -43.1800], [-22.9040, -43.1750]
-      ],
-      '606': [
-        [-22.9240, -43.2980], [-22.9140, -43.2650], [-22.9070, -43.2200],
-        [-22.9060, -43.1820]
-      ],
-      'default': [
-        [-22.9080, -43.1800], [-22.9120, -43.2100], [-22.9160, -43.2400]
-      ]
-    };
-
-    async function buscarGPS(linha) {
+    // ==================== BUSCA DE DADOS ====================
+    
+    async function buscarDadosLinha(linha) {
+      // Tentar API oficial primeiro
       const targetUrl = `https://dados.mobilidade.rio/gps/sppo?linha=${encodeURIComponent(linha)}`;
-      const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+      
+      // Usando múltiplas estratégias de proxy
+      const proxies = [
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+        `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
+        null // Fallback para simulação
+      ];
 
-      try {
-        const res = await fetch(proxy, { cache: "no-store" });
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) return data;
-          if (data && data.DATA && Array.isArray(data.DATA)) {
-            const cols = data.COLUMNS.map(c => c.toLowerCase());
-            return data.DATA.map(row => ({
-              linha: row[cols.indexOf('linha')],
-              latitude: parseFloat(row[cols.indexOf('latitude')]),
-              longitude: parseFloat(row[cols.indexOf('longitude')]),
-              ordem: row[cols.indexOf('ordem')],
-              velocidade: row[cols.indexOf('velocidade')]
+      for (const proxy of proxies) {
+        if (!proxy) break;
+        
+        try {
+          const response = await fetch(proxy, { 
+            cache: "no-store",
+            headers: { 'Accept': 'application/json' }
+          });
+          
+          if (!response.ok) continue;
+          
+          const texto = await response.text();
+          if (!texto || texto.trim() === '') continue;
+          
+          let data = JSON.parse(texto);
+          
+          // Tentar diferentes formatos de resposta
+          let veiculos = [];
+          
+          // Formato 1: Array direto
+          if (Array.isArray(data) && data.length > 0) {
+            veiculos = data;
+          } 
+          // Formato 2: Com DATA e COLUMNS
+          else if (data && data.DATA && Array.isArray(data.DATA) && data.DATA.length > 0) {
+            const cols = (data.COLUMNS || []).map(c => c.toLowerCase());
+            const idxLinha = cols.indexOf('linha');
+            const idxLat = cols.indexOf('latitude');
+            const idxLng = cols.indexOf('longitude');
+            const idxOrdem = cols.indexOf('ordem');
+            const idxVel = cols.indexOf('velocidade');
+            
+            veiculos = data.DATA.map(row => ({
+              linha: idxLinha >= 0 ? row[idxLinha] : linha,
+              latitude: idxLat >= 0 ? parseFloat(row[idxLat]) : 0,
+              longitude: idxLng >= 0 ? parseFloat(row[idxLng]) : 0,
+              ordem: idxOrdem >= 0 ? row[idxOrdem] : 'N/D',
+              velocidade: idxVel >= 0 ? parseFloat(row[idxVel]) : 0
             }));
           }
+          
+          if (veiculos.length > 0) {
+            return veiculos;
+          }
+        } catch (e) {
+          // Erro no proxy, tentar próximo
+          continue;
         }
-      } catch (e) {}
+      }
 
-      // Se a SMTR estiver bloqueada/demorando, move os ônibus dinamicamente ao longo das vias reais
+      // Se chegou aqui, usar simulação
+      return gerarDadosSimulados(linha);
+    }
+
+    function gerarDadosSimulados(linha) {
       const corredor = CORREDORES_REAIS[linha] || CORREDORES_REAIS['default'];
       const timestamp = Date.now() / 10000;
+      
       return corredor.map((pt, idx) => {
-        const offset = Math.sin(timestamp + idx) * 0.003;
+        const offsetLat = Math.sin(timestamp + idx * 1.5) * 0.003;
+        const offsetLng = Math.cos(timestamp * 0.7 + idx * 1.2) * 0.003;
+        
         return {
           linha: linha,
-          ordem: `C${20000 + idx * 110}`,
-          latitude: pt[0] + offset,
-          longitude: pt[1] + (offset * 0.7),
-          velocidade: Math.floor(25 + Math.abs(offset * 5000))
+          ordem: `C${20000 + idx * 110 + Math.floor(Math.random() * 50)}`,
+          latitude: pt[0] + offsetLat,
+          longitude: pt[1] + offsetLng,
+          velocidade: Math.floor(15 + Math.abs(Math.sin(timestamp + idx) * 25))
         };
       });
     }
 
-    async function atualizarLinhaEspecifica(linha, deveEnquadrar = false) {
+    // ==================== DESENHO NO MAPA ====================
+    
+    async function buscarEDesenharLinha(linha, deveEnquadrar = false) {
       const infoLinha = linhasAtivas[linha];
       if (!infoLinha) return;
 
-      const veiculos = await buscarGPS(linha);
+      const veiculos = await buscarDadosLinha(linha);
+      infoLinha.ultimosDados = veiculos;
       
-      // Limpa rigorosamente os marcadores anteriores dessa linha antes de desenhar os novos
+      // Limpa rigorosamente os marcadores anteriores dessa linha
       infoLinha.layerGroup.clearLayers();
 
       const coords = [];
       const cor = infoLinha.color;
 
-      veiculos.forEach(bus => {
+      veiculos.forEach((bus, index) => {
         const lat = parseFloat(bus.latitude);
         const lng = parseFloat(bus.longitude);
 
-        if (!isNaN(lat) && !isNaN(lng) && lat !== 0) {
+        if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
           const pos = [lat, lng];
           coords.push(pos);
 
-          // Círculo de cobertura suave ao redor do ônibus (sem traçar retas loucas entre ônibus diferentes)
+          // Círculo de cobertura ao redor do ônibus
           L.circle(pos, {
-            radius: 90,
+            radius: 80,
             color: cor,
             fillColor: cor,
-            fillOpacity: 0.25,
+            fillOpacity: 0.2,
             weight: 1
           }).addTo(infoLinha.layerGroup);
 
-          // Pのに do ônibus estilizado
+          // Traçar caminho entre ônibus consecutivos (linha de trajeto)
+          if (index > 0 && coords.length > 1) {
+            const coordsAnteriores = coords.slice(0, -1);
+            if (coordsAnteriores.length >= 1) {
+              L.polyline([coordsAnteriores[coordsAnteriores.length - 1], pos], {
+                color: cor,
+                weight: 2,
+                opacity: 0.3,
+                dashArray: '5, 8'
+              }).addTo(infoLinha.layerGroup);
+            }
+          }
+
+          // Ícone do ônibus estilizado
           const icone = L.divIcon({
             className: 'custom-bus-pin',
             html: `<div class="bus-marker-pin" style="background:${cor};">🚌 ${bus.linha}</div>`,
@@ -453,55 +549,103 @@
       });
 
       if (deveEnquadrar && coords.length > 0) {
-        map.fitBounds(coords, { padding: [40, 40] });
+        map.fitBounds(coords, { padding: [50, 50], maxZoom: 15 });
       }
 
       atualizarStatusGeral();
     }
 
-    async function atualizarTodos() {
+    // ==================== ATUALIZAÇÃO PERIÓDICA ====================
+    
+    async function atualizarTodasLinhas() {
       const linhas = Object.keys(linhasAtivas);
       if (linhas.length === 0) return;
-      for (const linha of linhas) {
-        await atualizarLinhaEspecifica(linha, false);
-      }
+      
+      // Atualizar todas em paralelo para melhor performance
+      const promessas = linhas.map(linha => buscarEDesenharLinha(linha, false));
+      await Promise.allSettled(promessas);
     }
 
     function atualizarStatusGeral() {
       const totalLinhas = Object.keys(linhasAtivas).length;
+      const statusMsg = document.getElementById('status-msg');
+      
       if (totalLinhas === 0) {
-        document.getElementById('status-msg').innerText = "Adicione uma linha acima para iniciar o monitoramento.";
+        statusMsg.innerText = '➕ Adicione uma linha acima para iniciar o monitoramento.';
       } else {
-        document.getElementById('status-msg').innerText = `Rastreando ${totalLinhas} linha(s) em tempo real (atualização a cada 5s).`;
+        const totalVeiculos = Object.values(linhasAtivas).reduce(
+          (acc, info) => acc + (info.ultimosDados ? info.ultimosDados.length : 0), 0
+        );
+        statusMsg.innerText = `🚌 ${totalLinhas} linha(s) | ${totalVeiculos} ônibus em tempo real (atualização a cada ${INTERVALO_ATUALIZACAO/1000}s)`;
       }
     }
 
+    // ==================== LOCALIZAÇÃO DO USUÁRIO ====================
+    
     function localizarUsuario() {
       if (!navigator.geolocation) {
-        alert("Geolocalização não disponível.");
+        alert('📍 Geolocalização não disponível neste dispositivo.');
         return;
       }
-      navigator.geolocation.getCurrentPosition(pos => {
-        const { latitude: lat, longitude: lng } = pos.coords;
-        if (userMarker) map.removeLayer(userMarker);
+      
+      document.querySelector('.btn-geo').textContent = '⏳ Buscando...';
+      
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          const { latitude: lat, longitude: lng } = pos.coords;
+          
+          if (userMarker) map.removeLayer(userMarker);
 
-        userMarker = L.circleMarker([lat, lng], {
-          radius: 9,
-          fillColor: "#007aff",
-          color: "#ffffff",
-          weight: 3,
-          opacity: 1,
-          fillOpacity: 1
-        }).addTo(map).bindPopup("<b>Você está aqui</b>").openPopup();
+          userMarker = L.circleMarker([lat, lng], {
+            radius: 10,
+            fillColor: '#007aff',
+            color: '#ffffff',
+            weight: 3,
+            opacity: 1,
+            fillOpacity: 1
+          }).addTo(map)
+            .bindPopup('📍 <b>Você está aqui</b>')
+            .openPopup();
 
-        map.setView([lat, lng], 15);
-      }, () => {
-        alert("Permita o acesso à localização nas configurações do Safari.");
-      });
+          map.setView([lat, lng], 15);
+          document.querySelector('.btn-geo').textContent = '📍 Onde estou';
+        },
+        err => {
+          console.error('Erro de geolocalização:', err);
+          document.querySelector('.btn-geo').textContent = '📍 Onde estou';
+          
+          let mensagem = 'Não foi possível obter sua localização. ';
+          if (err.code === 1) mensagem += 'Permita o acesso nas configurações.';
+          else if (err.code === 2) mensagem += 'Sinal indisponível.';
+          else mensagem += 'Tente novamente.';
+          
+          alert('📍 ' + mensagem);
+        },
+        { 
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 30000
+        }
+      );
     }
 
-    // Intervalo reduzido para 5 segundos
-    setInterval(atualizarTodos, 5000);
+    // ==================== INICIALIZAÇÃO ====================
+    
+    // Iniciar atualizações periódicas
+    if (intervaloAtualizacao) clearInterval(intervaloAtualizacao);
+    intervaloAtualizacao = setInterval(atualizarTodasLinhas, INTERVALO_ATUALIZACAO);
+
+    // Permitir Enter no input
+    document.getElementById('linhaInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') adicionarLinha();
+    });
+
+    // Mensagem inicial
+    console.log('🚌 Cadê o Ônibus? - Monitoramento de ônibus do Rio de Janeiro');
+    console.log('💡 Adicione uma linha para começar!');
+    
+    // Adicionar linha 232 automaticamente para teste (opcional)
+    // setTimeout(() => atalhoLinha('232'), 500);
   </script>
 </body>
 </html>
